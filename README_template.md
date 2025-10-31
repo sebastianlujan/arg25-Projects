@@ -8,26 +8,27 @@ You’ll update your progress weekly **in the same PR**, so mentors and reviewer
 
 
 ##  Project Title
-_A short, descriptive name of your project._
+
+ZKEVVM
+
 
 ## Team
-- Team/Individual Name:
-- GitHub Handles:
-- Devfolio Handles: 
+- Team/Individual Name: Sebastian Lujan Artur Vargas
+- GitHub Handles: @sebastianlujan @ArturVargas
+- Devfolio Handles: sebas_eth 0xVato
 
 ## Project Description
-_What are you building and why does it matter? Explain the core problem and your proposed solution._
-
+ZKEVVM , is an implementation or Integration of an ZKEVM using the infraless infrastructure of the EVVM project, one L1 running a virtual blockchain infrastructure with the corresponding ZKEVM
+ZKEVVM = ZKEVM + EVVM
 
 
 ## Tech Stack
-_List all the technologies, frameworks, and tools you are using._
-
-
+Rust mainly, TBD
+SP1 maybe
+Stylus
 
 ## Objectives
-_What are the specific outcomes you aim to achieve by the end of ARG25?_
-
+I want to implement and learn a zkEVM and understand it by scratch.
 
 
 ## Weekly Progress
