@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {FHE, euint64, euint256, ebool, externalEuint256} from "@fhevm/solidity/lib/FHE.sol";
+import {FHE, euint64, euint256, ebool, externalEuint256, externalEuint64} from "@fhevm/solidity/lib/FHE.sol";
 import {EthereumConfig} from "@fhevm/solidity/config/ZamaConfig.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "../interfaces/IEVVMStylus.sol";
@@ -11,6 +11,32 @@ import "../interfaces/IEVVMStylus.sol";
 /// @dev Implements a virtual blockchain with encrypted blocks and transactions using Zama FHEVM
 contract EVVMCore is EthereumConfig, Ownable {
     // ============ Structs ============
+    
+    /// @notice EVVM metadata structure
+    struct EvvmMetadata {
+        string evvmName;
+        uint256 evvmID;
+        string principalTokenName;
+        string principalTokenSymbol;
+        address principalTokenAddress;
+        euint64 totalSupply;      // Encrypted total supply (euint64 for operations)
+        euint64 eraTokens;        // Encrypted era tokens threshold (euint64 for operations)
+        euint64 reward;           // Encrypted reward amount (euint64 for operations)
+    }
+    
+    /// @notice Address proposal with time delay
+    struct AddressTypeProposal {
+        address current;
+        address proposal;
+        uint256 timeToAccept;
+    }
+    
+    /// @notice Disperse payment metadata
+    struct DispersePayMetadata {
+        uint256 amount;
+        address to_address;
+        string to_identity;
+    }
     
     /// @notice Virtual block structure with encrypted state
     struct VirtualBlock {
@@ -56,6 +82,34 @@ contract EVVMCore is EthereumConfig, Ownable {
     // Stylus integration
     IEVVMStylus public stylusEngine;
     
+    // EVVM metadata
+    uint256 public evvmID;
+    uint256 public windowTimeToChangeEvvmID;
+    
+    // Balance management (encrypted)
+    mapping(address => mapping(address => euint64)) public balances; // user -> token -> encrypted balance (euint64 for operations)
+    
+    // Nonce management
+    mapping(address => uint256) public nextSyncUsedNonce;
+    mapping(address => mapping(uint256 => bool)) public asyncUsedNonce;
+    
+    // Staker management
+    mapping(address => bool) public stakerList;
+    bytes1 private constant FLAG_IS_STAKER = 0x01;
+    
+    // Proxy pattern
+    address public currentImplementation;
+    address public proposalImplementation;
+    uint256 public timeToAcceptImplementation;
+    
+    // Treasury and Staking integration
+    address public treasuryAddress;
+    address public stakingContractAddress;
+    
+    // EVVM metadata
+    EvvmMetadata public evvmMetadata;
+    AddressTypeProposal public admin;
+    
     // ============ Events ============
     
     event VirtualChainInitialized(string chainName, uint256 timestamp, uint256 initialGasLimit);
@@ -65,6 +119,13 @@ contract EVVMCore is EthereumConfig, Ownable {
     event ValidatorAdded(address indexed validator, address indexed by);
     event ValidatorRemoved(address indexed validator, address indexed by);
     event StylusEngineSet(address indexed engine);
+    event PaymentProcessed(address indexed from, address indexed to, address indexed token);
+    event EvvmIDUpdated(uint256 newEvvmID);
+    event AmountAddedToUser(address indexed user, address indexed token);
+    event AmountRemovedFromUser(address indexed user, address indexed token);
+    event RewardGiven(address indexed user); // Amount is encrypted in balance
+    event ImplementationProposed(address indexed newImpl, uint256 timeToAccept);
+    event AdminProposed(address indexed newAdmin, uint256 timeToAccept);
 
     // ============ Modifiers ============
     
@@ -82,6 +143,8 @@ contract EVVMCore is EthereumConfig, Ownable {
     
     constructor() Ownable(msg.sender) {
         // Constructor is empty - initialization happens via initializeVirtualChain
+        windowTimeToChangeEvvmID = block.timestamp + 1 days;
+        admin.current = msg.sender; // Initialize admin
     }
 
     // ============ Initialization ============
@@ -373,6 +436,102 @@ contract EVVMCore is EthereumConfig, Ownable {
     function getValidators() external view returns (address[] memory) {
         return validatorList;
     }
+    
+    /// @notice Get EVVM metadata
+    /// @return Complete metadata structure
+    function getEvvmMetadata() external view returns (EvvmMetadata memory) {
+        return evvmMetadata;
+    }
+    
+    /// @notice Get balance (encrypted)
+    /// @param user User address
+    /// @param token Token address
+    /// @return Encrypted balance (euint64)
+    function getBalance(address user, address token) external view returns (euint64) {
+        return balances[user][token];
+    }
+    
+    /// @notice Check if address is staker
+    /// @param user User address
+    /// @return True if staker
+    function isAddressStaker(address user) external view returns (bool) {
+        return stakerList[user];
+    }
+    
+    /// @notice Get next sync nonce
+    /// @param user User address
+    /// @return Next sync nonce
+    function getNextCurrentSyncNonce(address user) external view returns (uint256) {
+        return nextSyncUsedNonce[user];
+    }
+    
+    /// @notice Check if async nonce is used
+    /// @param user User address
+    /// @param nonce Nonce to check
+    /// @return True if used
+    function getIfUsedAsyncNonce(address user, uint256 nonce) external view returns (bool) {
+        return asyncUsedNonce[user][nonce];
+    }
+    
+    /// @notice Get reward amount (encrypted)
+    /// @return Encrypted reward amount (euint64) - decrypt with SDK
+    function getRewardAmount() external view returns (euint64) {
+        return evvmMetadata.reward;
+    }
+    
+    /// @notice Get era tokens threshold (encrypted)
+    /// @return Encrypted era tokens threshold (euint64) - decrypt with SDK
+    function getEraPrincipalToken() external view returns (euint64) {
+        return evvmMetadata.eraTokens;
+    }
+    
+    /// @notice Get principal token total supply (encrypted)
+    /// @return Encrypted total supply (euint64) - decrypt with SDK
+    function getPrincipalTokenTotalSupply() external view returns (euint64) {
+        return evvmMetadata.totalSupply;
+    }
+    
+    /// @notice Get staking contract address
+    /// @return Staking contract address
+    function getStakingContractAddress() external view returns (address) {
+        return stakingContractAddress;
+    }
+    
+    /// @notice Get treasury address
+    /// @return Treasury address
+    function getTreasuryAddress() external view returns (address) {
+        return treasuryAddress;
+    }
+    
+    /// @notice Get current admin
+    /// @return Current admin address
+    function getCurrentAdmin() external view returns (address) {
+        return admin.current;
+    }
+    
+    /// @notice Get proposed admin
+    /// @return Proposed admin address
+    function getProposalAdmin() external view returns (address) {
+        return admin.proposal;
+    }
+    
+    /// @notice Get time to accept admin
+    /// @return Timestamp when admin can be accepted
+    function getTimeToAcceptAdmin() external view returns (uint256) {
+        return admin.timeToAccept;
+    }
+    
+    /// @notice Get proposed implementation
+    /// @return Proposed implementation address
+    function getProposalImplementation() external view returns (address) {
+        return proposalImplementation;
+    }
+    
+    /// @notice Get time to accept implementation
+    /// @return Timestamp when implementation can be accepted
+    function getTimeToAcceptImplementation() external view returns (uint256) {
+        return timeToAcceptImplementation;
+    }
 
     // ============ Stylus Integration ============
     
@@ -382,6 +541,351 @@ contract EVVMCore is EthereumConfig, Ownable {
         require(_stylusEngine != address(0), "Invalid address");
         stylusEngine = IEVVMStylus(_stylusEngine);
         emit StylusEngineSet(_stylusEngine);
+    }
+    
+    /// @notice Set treasury address
+    /// @param _treasuryAddress Treasury contract address
+    function setTreasuryAddress(address _treasuryAddress) external onlyOwner {
+        treasuryAddress = _treasuryAddress;
+    }
+    
+    /// @notice Set staking contract address
+    /// @param _stakingContractAddress Staking contract address
+    function setStakingContractAddress(address _stakingContractAddress) external onlyOwner {
+        stakingContractAddress = _stakingContractAddress;
+    }
+    
+    /// @notice Set EVVM metadata
+    /// @param _evvmMetadata Metadata structure (with encrypted fields)
+    function setEvvmMetadata(EvvmMetadata memory _evvmMetadata) external onlyOwner {
+        evvmMetadata = _evvmMetadata;
+    }
+    
+    /// @notice Initialize encrypted metadata fields
+    /// @param _totalSupply Encrypted total supply (externalEuint64)
+    /// @param _totalSupplyProof Proof for total supply
+    /// @param _eraTokens Encrypted era tokens (externalEuint64)
+    /// @param _eraTokensProof Proof for era tokens
+    /// @param _reward Encrypted reward amount (externalEuint64)
+    /// @param _rewardProof Proof for reward
+    function initializeEncryptedMetadata(
+        externalEuint64 _totalSupply,
+        bytes calldata _totalSupplyProof,
+        externalEuint64 _eraTokens,
+        bytes calldata _eraTokensProof,
+        externalEuint64 _reward,
+        bytes calldata _rewardProof
+    ) external onlyOwner {
+        evvmMetadata.totalSupply = FHE.fromExternal(_totalSupply, _totalSupplyProof);
+        evvmMetadata.eraTokens = FHE.fromExternal(_eraTokens, _eraTokensProof);
+        evvmMetadata.reward = FHE.fromExternal(_reward, _rewardProof);
+        
+        // Allow owner to decrypt
+        FHE.allowThis(evvmMetadata.totalSupply);
+        FHE.allowThis(evvmMetadata.eraTokens);
+        FHE.allowThis(evvmMetadata.reward);
+    }
+
+    // ============ EVVM ID Management ============
+    
+    /// @notice Updates the EVVM ID with a new value (time-limited)
+    /// @param newEvvmID New EVVM ID value
+    function setEvvmID(uint256 newEvvmID) external onlyOwner {
+        if (newEvvmID == 0) {
+            require(block.timestamp <= windowTimeToChangeEvvmID, "Window expired");
+        }
+        
+        evvmID = newEvvmID;
+        windowTimeToChangeEvvmID = block.timestamp + 1 days;
+        
+        emit EvvmIDUpdated(newEvvmID);
+    }
+
+    // ============ Payment Functions ============
+    
+    /// @notice Process a payment with encrypted amount
+    /// @param from Sender address
+    /// @param to Recipient address
+    /// @param token Token address
+    /// @param inputEncryptedAmount Encrypted payment amount (externalEuint64)
+    /// @param inputAmountProof Proof for encrypted amount
+    /// @param inputEncryptedPriorityFee Optional encrypted priority fee (externalEuint64)
+    /// @param inputFeeProof Proof for encrypted priority fee
+    /// @param nonce Transaction nonce
+    /// @param priorityFlag True for async nonce, false for sync
+    function pay(
+        address from,
+        address to,
+        address token,
+        externalEuint64 inputEncryptedAmount,
+        bytes calldata inputAmountProof,
+        externalEuint64 inputEncryptedPriorityFee,
+        bytes calldata inputFeeProof,
+        uint256 nonce,
+        bool priorityFlag
+    ) external onlyInitialized {
+        require(from != address(0) && to != address(0), "Invalid addresses");
+        
+        // Convert external encrypted inputs
+        // IMPORTANT: externalEuint64 → euint64 (use add64() in SDK)
+        euint64 encryptedAmount = FHE.fromExternal(inputEncryptedAmount, inputAmountProof);
+        euint64 encryptedPriorityFee = FHE.fromExternal(inputEncryptedPriorityFee, inputFeeProof);
+        
+        // Verify nonce
+        if (priorityFlag) {
+            require(!asyncUsedNonce[from][nonce], "Nonce already used");
+            asyncUsedNonce[from][nonce] = true;
+        } else {
+            require(nonce == nextSyncUsedNonce[from], "Invalid nonce");
+            nextSyncUsedNonce[from]++;
+        }
+        
+        // Update balances (encrypted operations)
+        // Note: Balance checks require external decryption
+        balances[from][token] = FHE.sub(balances[from][token], encryptedAmount);
+        balances[to][token] = FHE.add(balances[to][token], encryptedAmount);
+        
+        // Handle priority fee if staker
+        if (stakerList[msg.sender]) {
+            balances[from][token] = FHE.sub(balances[from][token], encryptedPriorityFee);
+            balances[msg.sender][token] = FHE.add(balances[msg.sender][token], encryptedPriorityFee);
+            _giveReward(msg.sender, 1);
+        }
+        
+        // Allow parties to decrypt their balances
+        FHE.allowThis(balances[from][token]);
+        FHE.allow(balances[from][token], from);
+        FHE.allowThis(balances[to][token]);
+        FHE.allow(balances[to][token], to);
+        
+        emit PaymentProcessed(from, to, token);
+    }
+
+    // ============ Treasury Exclusive Functions ============
+    
+    /// @notice Adds encrypted tokens to a user's balance (Treasury only)
+    /// @param user User address
+    /// @param token Token address
+    /// @param inputEncryptedAmount Encrypted amount to add (externalEuint64)
+    /// @param inputProof Proof for encrypted amount
+    function addAmountToUser(
+        address user,
+        address token,
+        externalEuint64 inputEncryptedAmount,
+        bytes calldata inputProof
+    ) external {
+        require(msg.sender == treasuryAddress, "Not treasury");
+        
+        euint64 encryptedAmount = FHE.fromExternal(inputEncryptedAmount, inputProof);
+        balances[user][token] = FHE.add(balances[user][token], encryptedAmount);
+        
+        FHE.allowThis(balances[user][token]);
+        FHE.allow(balances[user][token], user);
+        
+        emit AmountAddedToUser(user, token);
+    }
+    
+    /// @notice Removes encrypted tokens from a user's balance (Treasury only)
+    /// @param user User address
+    /// @param token Token address
+    /// @param inputEncryptedAmount Encrypted amount to remove (externalEuint64)
+    /// @param inputProof Proof for encrypted amount
+    function removeAmountFromUser(
+        address user,
+        address token,
+        externalEuint64 inputEncryptedAmount,
+        bytes calldata inputProof
+    ) external {
+        require(msg.sender == treasuryAddress, "Not treasury");
+        
+        euint64 encryptedAmount = FHE.fromExternal(inputEncryptedAmount, inputProof);
+        balances[user][token] = FHE.sub(balances[user][token], encryptedAmount);
+        
+        FHE.allowThis(balances[user][token]);
+        FHE.allow(balances[user][token], user);
+        
+        emit AmountRemovedFromUser(user, token);
+    }
+
+    // ============ Internal Functions ============
+    
+    /// @notice Internal function to update balances (encrypted)
+    /// @param from Sender address
+    /// @param to Recipient address
+    /// @param token Token address
+    /// @param encryptedValue Encrypted amount (euint64)
+    /// @return success True if successful
+    function _updateBalance(
+        address from,
+        address to,
+        address token,
+        euint64 encryptedValue
+    ) internal returns (bool) {
+        // Note: Balance validation requires external decryption
+        balances[from][token] = FHE.sub(balances[from][token], encryptedValue);
+        balances[to][token] = FHE.add(balances[to][token], encryptedValue);
+        
+        FHE.allowThis(balances[from][token]);
+        FHE.allow(balances[from][token], from);
+        FHE.allowThis(balances[to][token]);
+        FHE.allow(balances[to][token], to);
+        
+        return true;
+    }
+    
+    /// @notice Internal function to give rewards (encrypted)
+    /// @param user Staker address
+    /// @param amount Number of transactions (encrypted)
+    /// @return success True if successful
+    function _giveReward(address user, uint256 amount) internal returns (bool) {
+        require(evvmMetadata.principalTokenAddress != address(0), "No principal token");
+        
+        // Calculate reward using encrypted reward amount
+        // reward * amount (both encrypted operations)
+        euint64 encryptedAmount = FHE.asEuint64(uint64(amount));
+        euint64 encryptedReward = FHE.mul(evvmMetadata.reward, encryptedAmount);
+        
+        // Add encrypted reward to balance
+        balances[user][evvmMetadata.principalTokenAddress] = 
+            FHE.add(balances[user][evvmMetadata.principalTokenAddress], encryptedReward);
+        
+        FHE.allowThis(balances[user][evvmMetadata.principalTokenAddress]);
+        FHE.allow(balances[user][evvmMetadata.principalTokenAddress], user);
+        
+        // Event without exposing amount (can be decrypted from balance)
+        emit RewardGiven(user);
+        return true;
+    }
+
+    // ============ Proxy Management Functions ============
+    
+    /// @notice Proposes a new implementation (30-day delay)
+    /// @param _newImpl New implementation address
+    function proposeImplementation(address _newImpl) external onlyOwner {
+        proposalImplementation = _newImpl;
+        timeToAcceptImplementation = block.timestamp + 30 days;
+        emit ImplementationProposed(_newImpl, timeToAcceptImplementation);
+    }
+    
+    /// @notice Rejects pending implementation proposal
+    function rejectUpgrade() external onlyOwner {
+        proposalImplementation = address(0);
+        timeToAcceptImplementation = 0;
+    }
+    
+    /// @notice Accepts implementation after time delay
+    function acceptImplementation() external onlyOwner {
+        require(block.timestamp >= timeToAcceptImplementation, "Time not elapsed");
+        require(proposalImplementation != address(0), "No proposal");
+        
+        currentImplementation = proposalImplementation;
+        proposalImplementation = address(0);
+        timeToAcceptImplementation = 0;
+    }
+
+    // ============ Admin Management Functions ============
+    
+    /// @notice Proposes new admin (1-day delay)
+    /// @param _newOwner New admin address
+    function proposeAdmin(address _newOwner) external onlyOwner {
+        require(_newOwner != address(0) && _newOwner != admin.current, "Invalid admin");
+        
+        admin.proposal = _newOwner;
+        admin.timeToAccept = block.timestamp + 1 days;
+        emit AdminProposed(_newOwner, admin.timeToAccept);
+    }
+    
+    /// @notice Rejects pending admin proposal
+    function rejectProposalAdmin() external onlyOwner {
+        admin.proposal = address(0);
+        admin.timeToAccept = 0;
+    }
+    
+    /// @notice Accepts admin proposal (called by proposed admin)
+    function acceptAdmin() external {
+        require(block.timestamp >= admin.timeToAccept, "Time not elapsed");
+        require(msg.sender == admin.proposal, "Not proposed admin");
+        
+        admin.current = admin.proposal;
+        admin.proposal = address(0);
+        admin.timeToAccept = 0;
+    }
+
+    // ============ Reward System Functions ============
+    
+    /// @notice Recalculates reward and triggers era transition
+    /// @dev Note: Era transition comparison requires external decryption.
+    ///      For MVP, we maintain encrypted storage but use public verification.
+    ///      The encrypted values are updated after public calculation.
+    function recalculateReward() external {
+        // Note: For era transition, we need to compare encrypted values.
+        // Since FHE comparison results are encrypted (ebool), we need external decryption.
+        // For MVP: Store a public flag or require external verification.
+        // Here we'll use a simplified approach: store encrypted but verify externally.
+        
+        // Give random bonus to caller (1-5083x reward) - encrypted
+        uint256 randomMultiplier = getRandom(1, 5083);
+        euint64 encryptedMultiplier = FHE.asEuint64(uint64(randomMultiplier));
+        euint64 encryptedBonus = FHE.mul(evvmMetadata.reward, encryptedMultiplier);
+        
+        balances[msg.sender][evvmMetadata.principalTokenAddress] = 
+            FHE.add(balances[msg.sender][evvmMetadata.principalTokenAddress], encryptedBonus);
+        
+        FHE.allowThis(balances[msg.sender][evvmMetadata.principalTokenAddress]);
+        FHE.allow(balances[msg.sender][evvmMetadata.principalTokenAddress], msg.sender);
+        
+        // Note: Era transition and reward halving require encrypted division.
+        // Since FHE.div is not available for euint64, we'll handle this externally
+        // or use a hybrid approach where calculation is public but storage is encrypted.
+        // For now, these operations are handled via setEvvmMetadata by admin after external calculation.
+    }
+    
+    /// @notice Generates pseudo-random number
+    /// @param min Minimum value
+    /// @param max Maximum value
+    /// @return Random number
+    function getRandom(uint256 min, uint256 max) internal view returns (uint256) {
+        return min + (uint256(keccak256(abi.encodePacked(block.timestamp, block.prevrandao))) % (max - min + 1));
+    }
+
+    // ============ Staking Integration Functions ============
+    
+    /// @notice Updates staker status (Staking contract only)
+    /// @param user User address
+    /// @param answer Staker flag
+    function pointStaker(address user, bytes1 answer) external {
+        require(msg.sender == stakingContractAddress, "Not staking contract");
+        stakerList[user] = (answer == FLAG_IS_STAKER);
+    }
+
+    // ============ Proxy Pattern ============
+    
+    /// @notice Fallback function for proxy pattern
+    fallback() external {
+        if (currentImplementation == address(0)) revert("No implementation");
+        
+        assembly {
+            calldatacopy(0, 0, calldatasize())
+            
+            let result := delegatecall(
+                gas(),
+                sload(currentImplementation.slot),
+                0,
+                calldatasize(),
+                0,
+                0
+            )
+            
+            returndatacopy(0, 0, returndatasize())
+            
+            switch result
+            case 0 {
+                revert(0, returndatasize())
+            }
+            default {
+                return(0, returndatasize())
+            }
+        }
     }
 
     // ============ Internal Functions ============
