@@ -6,13 +6,15 @@ This document details the configurations and steps necessary to set up Zama FHE 
 
 ### 1. `package.json`
 - ✅ Added `@fhevm/hardhat-plugin` in devDependencies
+- ✅ Added `@zama-fhe/relayer-sdk` in devDependencies
 - ✅ Added `@fhevm/solidity` in dependencies
+- ✅ Added `encrypted-types` in dependencies
 - ✅ Added scripts: `coverage` and `lint`
 
 ### 2. `hardhat.config.js`
-- ✅ Added `require("@fhevm/hardhat-plugin")`
-- ✅ Added `fhevm` configuration section
-- ✅ Set `chainId` to `31337` for Hardhat network
+- ✅ Added `require("@fhevm/hardhat-plugin")` at the top
+- ✅ Added `fhevm` configuration section (empty, auto-configured)
+- ✅ Set `chainId` to `31337` for Hardhat network (required by FHEVM plugin)
 - ✅ Set Solidity version to `0.8.24` (required by Zama FHEVM)
 
 ## 📋 Pending Steps
@@ -24,8 +26,14 @@ npm install
 ```
 
 This will install:
-- `@fhevm/hardhat-plugin` - Hardhat plugin for FHEVM
-- `@fhevm/solidity` - Zama SDK for FHE in Solidity
+
+**DevDependencies:**
+- `@fhevm/hardhat-plugin` (^0.3.0-0) - Hardhat plugin for FHEVM
+- `@zama-fhe/relayer-sdk` (^0.3.0-5) - Zama FHE Relayer SDK
+
+**Dependencies:**
+- `@fhevm/solidity` (^0.9.0) - Zama SDK for FHE in Solidity
+- `encrypted-types` (^0.0.4) - Encrypted types library
 
 ### 2. Configure Environment Variables
 
@@ -142,7 +150,9 @@ npm run compile
 
 # If there are errors, verify that dependencies are installed
 npm list @fhevm/hardhat-plugin
+npm list @zama-fhe/relayer-sdk
 npm list @fhevm/solidity
+npm list encrypted-types
 ```
 
 ## ⚠️ Important Notes
