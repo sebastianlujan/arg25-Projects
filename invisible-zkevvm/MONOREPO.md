@@ -1,119 +1,118 @@
-# Estructura del Monorepo
+# Monorepo Structure
 
-Este proyecto es un repositorio monolítico que contiene tanto contratos inteligentes en **Solidity** (usando Hardhat) como contratos en **Stylus** (usando Rust).
+This project is a monolithic repository that contains both **Solidity** smart contracts (using Hardhat) and **Stylus** contracts (using Rust).
 
-## Estructura de Carpetas
+## Folder Structure
 
 ```
 invisible-zkevvm/
-├── contracts/          # Contratos Solidity
-├── scripts/            # Scripts de despliegue (Hardhat)
-├── test/               # Tests para contratos Solidity
-├── src/                # Código fuente Stylus (Rust)
-├── examples/           # Ejemplos de Stylus
-├── hardhat.config.js   # Configuración de Hardhat
-├── package.json        # Dependencias Node.js/Hardhat
-├── Cargo.toml          # Dependencias Rust/Stylus
-└── rust-toolchain.toml # Versión de Rust toolchain
+├── contracts/          # Solidity contracts
+├── scripts/            # Deployment scripts (Hardhat)
+├── test/               # Tests for Solidity contracts
+├── src/                # Stylus source code (Rust)
+├── examples/           # Stylus examples
+├── hardhat.config.js   # Hardhat configuration
+├── package.json        # Node.js/Hardhat dependencies
+├── Cargo.toml          # Rust/Stylus dependencies
+└── rust-toolchain.toml # Rust toolchain version
 ```
 
-## Trabajando con Solidity (Hardhat)
+## Working with Solidity (Hardhat)
 
-### Instalación
+### Installation
 
 ```bash
 npm install
 ```
 
-### Compilar contratos
+### Compile contracts
 
 ```bash
 npm run compile
-# o
+# or
 npx hardhat compile
 ```
 
-### Ejecutar tests
+### Run tests
 
 ```bash
 npm test
-# o
+# or
 npx hardhat test
 ```
 
-### Desplegar contratos
+### Deploy contracts
 
 ```bash
 npm run deploy -- --network arbitrumSepolia
-# o
+# or
 npx hardhat run scripts/deploy.js --network arbitrumSepolia
 ```
 
-### Redes disponibles
+### Available networks
 
-- `hardhat`: Red local de desarrollo
+- `hardhat`: Local development network
 - `arbitrumSepolia`: Arbitrum Sepolia testnet
 - `arbitrumOne`: Arbitrum One mainnet
 
-**Nota**: Necesitarás configurar las variables de entorno en un archivo `.env`:
+**Note**: You'll need to configure environment variables in a `.env` file:
 ```
-PRIVATE_KEY=tu_clave_privada
+PRIVATE_KEY=your_private_key
 ARBITRUM_SEPOLIA_RPC_URL=https://sepolia-rollup.arbitrum.io/rpc
 ARBITRUM_ONE_RPC_URL=https://arb1.arbitrum.io/rpc
 ```
 
-## Trabajando con Stylus (Rust)
+## Working with Stylus (Rust)
 
-### Compilar contratos Stylus
+### Compile Stylus contracts
 
 ```bash
 cargo stylus build
 ```
 
-### Verificar contratos
+### Verify contracts
 
 ```bash
 cargo stylus check
 ```
 
-### Desplegar contratos Stylus
+### Deploy Stylus contracts
 
 ```bash
 cargo stylus deploy
 ```
 
-### Ejecutar tests
+### Run tests
 
 ```bash
 cargo test
 ```
 
-## Flujo de Trabajo
+## Workflow
 
-### Desarrollo de Solidity
+### Solidity Development
 
-1. Escribe tus contratos en `contracts/`
-2. Crea tests en `test/`
-3. Ejecuta `npm test` para probar
-4. Despliega con `npm run deploy`
+1. Write your contracts in `contracts/`
+2. Create tests in `test/`
+3. Run `npm test` to test
+4. Deploy with `npm run deploy`
 
-### Desarrollo de Stylus
+### Stylus Development
 
-1. Escribe tus contratos en `src/lib.rs` o `examples/`
-2. Crea tests en el mismo archivo usando `#[cfg(test)]`
-3. Ejecuta `cargo test` para probar
-4. Compila con `cargo stylus build`
-5. Despliega con `cargo stylus deploy`
+1. Write your contracts in `src/lib.rs` or `examples/`
+2. Create tests in the same file using `#[cfg(test)]`
+3. Run `cargo test` to test
+4. Compile with `cargo stylus build`
+5. Deploy with `cargo stylus deploy`
 
-## Ventajas de este Monorepo
+## Advantages of this Monorepo
 
-- ✅ Un solo repositorio para ambos tipos de contratos
-- ✅ Compartir código y utilidades entre proyectos
-- ✅ Testing unificado
-- ✅ Gestión de dependencias centralizada
-- ✅ Fácil comparación entre implementaciones Solidity y Stylus
+- ✅ Single repository for both contract types
+- ✅ Share code and utilities between projects
+- ✅ Unified testing
+- ✅ Centralized dependency management
+- ✅ Easy comparison between Solidity and Stylus implementations
 
-## Ejemplo: Counter
+## Example: Counter
 
-Este monorepo incluye implementaciones del contrato Counter tanto en Solidity (`contracts/Counter.sol`) como en Stylus (`src/lib.rs`), permitiendo comparar ambas aproximaciones.
-
+This monorepo includes Counter contract implementations in both Solidity (`contracts/Counter.sol`) and Stylus (`src/lib.rs`), allowing comparison of both approaches.

@@ -1,4 +1,5 @@
 require("@nomicfoundation/hardhat-toolbox");
+require("@fhevm/hardhat-plugin");
 
 // Cargar variables de entorno si dotenv está disponible
 try {
@@ -10,7 +11,7 @@ try {
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
   solidity: {
-    version: "0.8.20",
+    version: "0.8.24",
     settings: {
       optimizer: {
         enabled: true,
@@ -20,7 +21,7 @@ module.exports = {
   },
   networks: {
     hardhat: {
-      chainId: 1337,
+      chainId: 31337, // Required by FHEVM plugin
     },
     // Arbitrum Sepolia (testnet)
     arbitrumSepolia: {
@@ -40,6 +41,11 @@ module.exports = {
     tests: "./test",
     cache: "./cache",
     artifacts: "./artifacts",
+  },
+  // Configuración de FHEVM (Zama)
+  fhevm: {
+    // Configuración automática para redes compatibles con FHEVM
+    // Sepolia testnet es compatible con FHEVM
   },
 };
 
