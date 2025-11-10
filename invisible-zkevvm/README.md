@@ -6,14 +6,15 @@ Each participant or team will maintain this README throughout the program.
 You'll update your progress weekly **in the same PR**, so mentors and reviewers can track your journey end-to-end.
 
 
+## Project Title
 
-##  Project Title
 **zkEvvm - Stylus Smart Contract Project**
 
 ## Team
-- Team/Individual Name: Sebastian Lujan
-- GitHub Handles: sebastianlujan
-- Devfolio Handles: 
+
+- Team/Individual Name: Sebastian Lujan Artur Vargas
+- GitHub Handles: @sebastianlujan @ArturVargas
+- Devfolio Handles: sebas_eth 0xVato
 
 ## Project Description
 _What are you building and why does it matter? Explain the core problem and your proposed solution._

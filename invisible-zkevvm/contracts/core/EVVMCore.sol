@@ -5,6 +5,7 @@ import {FHE, euint64, euint256, ebool, externalEuint256, externalEuint64} from "
 import {EthereumConfig} from "@fhevm/solidity/config/ZamaConfig.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "../interfaces/IEVVMStylus.sol";
+import "../library/SignatureUtils.sol";
 
 /// @title EVVM Core - Virtual Blockchain with FHE
 /// @notice Main contract for the Ethereum Virtual Virtual Machine
@@ -97,6 +98,13 @@ contract EVVMCore is EthereumConfig, Ownable {
     mapping(address => bool) public stakerList;
     bytes1 private constant FLAG_IS_STAKER = 0x01;
     
+    // Token whitelist management
+    mapping(address => bool) public tokenWhitelist;
+    bool public whitelistEnabled;
+    
+    // Signature verification settings
+    bool public signatureVerificationRequired;
+    
     // Proxy pattern
     address public currentImplementation;
     address public proposalImplementation;
@@ -126,6 +134,10 @@ contract EVVMCore is EthereumConfig, Ownable {
     event RewardGiven(address indexed user); // Amount is encrypted in balance
     event ImplementationProposed(address indexed newImpl, uint256 timeToAccept);
     event AdminProposed(address indexed newAdmin, uint256 timeToAccept);
+    event TokenAddedToWhitelist(address indexed token);
+    event TokenRemovedFromWhitelist(address indexed token);
+    event WhitelistEnabled(bool enabled);
+    event SignatureVerificationRequired(bool required);
 
     // ============ Modifiers ============
     
@@ -603,28 +615,78 @@ contract EVVMCore is EthereumConfig, Ownable {
 
     // ============ Payment Functions ============
     
-    /// @notice Process a payment with encrypted amount
+    /// @notice Process a payment with encrypted amount and optional signature verification
     /// @param from Sender address
     /// @param to Recipient address
+    /// @param toIdentity Recipient identity (empty string if using address)
     /// @param token Token address
+    /// @param amountPlaintext Amount in plaintext (for signature verification, 0 if signature not required)
     /// @param inputEncryptedAmount Encrypted payment amount (externalEuint64)
     /// @param inputAmountProof Proof for encrypted amount
-    /// @param inputEncryptedPriorityFee Optional encrypted priority fee (externalEuint64)
+    /// @param priorityFeePlaintext Priority fee in plaintext (for signature verification, 0 if signature not required)
+    /// @param inputEncryptedPriorityFee Encrypted priority fee (externalEuint64)
     /// @param inputFeeProof Proof for encrypted priority fee
     /// @param nonce Transaction nonce
     /// @param priorityFlag True for async nonce, false for sync
+    /// @param executor Executor address (address(0) if no executor)
+    /// @param signature Signature for the payment transaction (empty if signature verification disabled)
+    /// @dev WARNING: If signatureVerificationRequired is true, amountPlaintext and priorityFeePlaintext
+    ///      will be visible in transaction calldata, breaking privacy. Consider using payWithCommitment()
+    ///      for private payments when signature verification is required.
     function pay(
         address from,
         address to,
+        string memory toIdentity,
         address token,
+        uint256 amountPlaintext,
         externalEuint64 inputEncryptedAmount,
         bytes calldata inputAmountProof,
+        uint256 priorityFeePlaintext,
         externalEuint64 inputEncryptedPriorityFee,
         bytes calldata inputFeeProof,
         uint256 nonce,
-        bool priorityFlag
+        bool priorityFlag,
+        address executor,
+        bytes memory signature
     ) external onlyInitialized {
-        require(from != address(0) && to != address(0), "Invalid addresses");
+        require(from != address(0), "Invalid sender");
+        require(to != address(0) || bytes(toIdentity).length > 0, "Invalid recipient");
+        
+        // Verify token whitelist if enabled
+        // If whitelistEnabled is false, any token can be used
+        if (whitelistEnabled) {
+            require(tokenWhitelist[token], "Token not whitelisted");
+        }
+        
+        // Verify signature if required
+        // NOTE: This requires amountPlaintext and priorityFeePlaintext to be in calldata,
+        // which breaks privacy. For private payments, consider disabling signature verification
+        // or using a commitment-based scheme.
+        if (signatureVerificationRequired) {
+            require(signature.length > 0, "Signature required");
+            uint256 nonceForSignature = priorityFlag ? nonce : nextSyncUsedNonce[from];
+            require(
+                SignatureUtils.verifyMessageSignedForPay(
+                    evvmID,
+                    from,
+                    to,
+                    toIdentity,
+                    token,
+                    amountPlaintext,
+                    priorityFeePlaintext,
+                    nonceForSignature,
+                    priorityFlag,
+                    executor,
+                    signature
+                ),
+                "Invalid signature"
+            );
+        }
+        
+        // Verify executor if specified
+        if (executor != address(0)) {
+            require(msg.sender == executor, "Not the executor");
+        }
         
         // Convert external encrypted inputs
         // IMPORTANT: externalEuint64 → euint64 (use add64() in SDK)
@@ -856,6 +918,51 @@ contract EVVMCore is EthereumConfig, Ownable {
     function pointStaker(address user, bytes1 answer) external {
         require(msg.sender == stakingContractAddress, "Not staking contract");
         stakerList[user] = (answer == FLAG_IS_STAKER);
+    }
+
+    // ============ Token Whitelist Management ============
+    
+    /// @notice Add a token to the whitelist
+    /// @param token Token address to add
+    function addTokenToWhitelist(address token) external onlyOwner {
+        require(token != address(0), "Invalid token address");
+        require(!tokenWhitelist[token], "Token already whitelisted");
+        
+        tokenWhitelist[token] = true;
+        emit TokenAddedToWhitelist(token);
+    }
+    
+    /// @notice Remove a token from the whitelist
+    /// @param token Token address to remove
+    function removeTokenFromWhitelist(address token) external onlyOwner {
+        require(tokenWhitelist[token], "Token not whitelisted");
+        
+        tokenWhitelist[token] = false;
+        emit TokenRemovedFromWhitelist(token);
+    }
+    
+    /// @notice Enable or disable the token whitelist
+    /// @param enabled True to enable whitelist, false to disable
+    function setWhitelistEnabled(bool enabled) external onlyOwner {
+        whitelistEnabled = enabled;
+        emit WhitelistEnabled(enabled);
+    }
+    
+    /// @notice Check if a token is whitelisted
+    /// @param token Token address to check
+    /// @return True if token is whitelisted or whitelist is disabled
+    function isTokenWhitelisted(address token) external view returns (bool) {
+        return !whitelistEnabled || tokenWhitelist[token];
+    }
+    
+    /// @notice Enable or disable signature verification requirement
+    /// @param required True to require signatures, false to make them optional
+    /// @dev WARNING: When signature verification is required, amountPlaintext and priorityFeePlaintext
+    ///      must be provided in calldata, which breaks privacy. For maximum privacy, set this to false
+    ///      and rely on encrypted amounts only.
+    function setSignatureVerificationRequired(bool required) external onlyOwner {
+        signatureVerificationRequired = required;
+        emit SignatureVerificationRequired(required);
     }
 
     // ============ Proxy Pattern ============

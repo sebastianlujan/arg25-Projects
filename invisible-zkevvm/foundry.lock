@@ -1,0 +1,8 @@
+{
+  "lib/EVVM-viem-signature-library": {
+    "tag": {
+      "name": "v2.1.1",
+      "rev": "a2b9e8f8c104d64e44758338d6a63afca25b4ba4"
+    }
+  }
+}

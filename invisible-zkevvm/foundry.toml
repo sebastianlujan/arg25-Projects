@@ -1,0 +1,18 @@
+[profile.default]
+solc = "0.8.24"
+src = "contracts"
+out = "artifacts"
+libs = ["lib"]
+remappings = [
+    '@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/',
+    '@fhevm/solidity/=node_modules/@fhevm/solidity/',
+]
+optimizer = true
+optimizer_runs = 200
+via_ir = false
+
+[fuzz]
+runs = 100
+seed = '0xdeadbeef'
+max_test_rejects = 1000
+

@@ -1,0 +1,3 @@
+[submodule "invisible-zkevvm/lib/EVVM-viem-signature-library"]
+	path = invisible-zkevvm/lib/EVVM-viem-signature-library
+	url = https://github.com/EVVM-org/EVVM-viem-signature-library
