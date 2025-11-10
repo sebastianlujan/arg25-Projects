@@ -1,3 +1,6 @@
 [submodule "invisible-zkevvm/lib/EVVM-viem-signature-library"]
 	path = invisible-zkevvm/lib/EVVM-viem-signature-library
 	url = https://github.com/EVVM-org/EVVM-viem-signature-library
+[submodule "invisible-zkevvm/lib/forge-std"]
+	path = invisible-zkevvm/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std

@@ -39,6 +39,24 @@ contract EVVMCore is EthereumConfig, Ownable {
         string to_identity;
     }
     
+    /// @notice Payment parameters structure to reduce stack depth
+    struct PaymentParams {
+        address from;
+        address to;
+        string toIdentity;
+        address token;
+        uint256 amountPlaintext;
+        externalEuint64 inputEncryptedAmount;
+        bytes inputAmountProof;
+        uint256 priorityFeePlaintext;
+        externalEuint64 inputEncryptedPriorityFee;
+        bytes inputFeeProof;
+        uint256 nonce;
+        bool priorityFlag;
+        address executor;
+        bytes signature;
+    }
+    
     /// @notice Virtual block structure with encrypted state
     struct VirtualBlock {
         euint64 blockNumber;      // Encrypted block number
@@ -616,111 +634,77 @@ contract EVVMCore is EthereumConfig, Ownable {
     // ============ Payment Functions ============
     
     /// @notice Process a payment with encrypted amount and optional signature verification
-    /// @param from Sender address
-    /// @param to Recipient address
-    /// @param toIdentity Recipient identity (empty string if using address)
-    /// @param token Token address
-    /// @param amountPlaintext Amount in plaintext (for signature verification, 0 if signature not required)
-    /// @param inputEncryptedAmount Encrypted payment amount (externalEuint64)
-    /// @param inputAmountProof Proof for encrypted amount
-    /// @param priorityFeePlaintext Priority fee in plaintext (for signature verification, 0 if signature not required)
-    /// @param inputEncryptedPriorityFee Encrypted priority fee (externalEuint64)
-    /// @param inputFeeProof Proof for encrypted priority fee
-    /// @param nonce Transaction nonce
-    /// @param priorityFlag True for async nonce, false for sync
-    /// @param executor Executor address (address(0) if no executor)
-    /// @param signature Signature for the payment transaction (empty if signature verification disabled)
+    /// @param params Payment parameters struct containing all payment data
     /// @dev WARNING: If signatureVerificationRequired is true, amountPlaintext and priorityFeePlaintext
     ///      will be visible in transaction calldata, breaking privacy. Consider using payWithCommitment()
     ///      for private payments when signature verification is required.
-    function pay(
-        address from,
-        address to,
-        string memory toIdentity,
-        address token,
-        uint256 amountPlaintext,
-        externalEuint64 inputEncryptedAmount,
-        bytes calldata inputAmountProof,
-        uint256 priorityFeePlaintext,
-        externalEuint64 inputEncryptedPriorityFee,
-        bytes calldata inputFeeProof,
-        uint256 nonce,
-        bool priorityFlag,
-        address executor,
-        bytes memory signature
-    ) external onlyInitialized {
-        require(from != address(0), "Invalid sender");
-        require(to != address(0) || bytes(toIdentity).length > 0, "Invalid recipient");
+    function pay(PaymentParams memory params) external onlyInitialized {
+        require(params.from != address(0), "Invalid sender");
+        require(params.to != address(0) || bytes(params.toIdentity).length > 0, "Invalid recipient");
         
         // Verify token whitelist if enabled
-        // If whitelistEnabled is false, any token can be used
         if (whitelistEnabled) {
-            require(tokenWhitelist[token], "Token not whitelisted");
+            require(tokenWhitelist[params.token], "Token not whitelisted");
         }
         
         // Verify signature if required
-        // NOTE: This requires amountPlaintext and priorityFeePlaintext to be in calldata,
-        // which breaks privacy. For private payments, consider disabling signature verification
-        // or using a commitment-based scheme.
         if (signatureVerificationRequired) {
-            require(signature.length > 0, "Signature required");
-            uint256 nonceForSignature = priorityFlag ? nonce : nextSyncUsedNonce[from];
+            require(params.signature.length > 0, "Signature required");
+            uint256 nonceForSignature = params.priorityFlag ? params.nonce : nextSyncUsedNonce[params.from];
             require(
                 SignatureUtils.verifyMessageSignedForPay(
                     evvmID,
-                    from,
-                    to,
-                    toIdentity,
-                    token,
-                    amountPlaintext,
-                    priorityFeePlaintext,
+                    params.from,
+                    params.to,
+                    params.toIdentity,
+                    params.token,
+                    params.amountPlaintext,
+                    params.priorityFeePlaintext,
                     nonceForSignature,
-                    priorityFlag,
-                    executor,
-                    signature
+                    params.priorityFlag,
+                    params.executor,
+                    params.signature
                 ),
                 "Invalid signature"
             );
         }
         
         // Verify executor if specified
-        if (executor != address(0)) {
-            require(msg.sender == executor, "Not the executor");
+        if (params.executor != address(0)) {
+            require(msg.sender == params.executor, "Not the executor");
         }
         
         // Convert external encrypted inputs
-        // IMPORTANT: externalEuint64 → euint64 (use add64() in SDK)
-        euint64 encryptedAmount = FHE.fromExternal(inputEncryptedAmount, inputAmountProof);
-        euint64 encryptedPriorityFee = FHE.fromExternal(inputEncryptedPriorityFee, inputFeeProof);
+        euint64 encryptedAmount = FHE.fromExternal(params.inputEncryptedAmount, params.inputAmountProof);
+        euint64 encryptedPriorityFee = FHE.fromExternal(params.inputEncryptedPriorityFee, params.inputFeeProof);
         
         // Verify nonce
-        if (priorityFlag) {
-            require(!asyncUsedNonce[from][nonce], "Nonce already used");
-            asyncUsedNonce[from][nonce] = true;
+        if (params.priorityFlag) {
+            require(!asyncUsedNonce[params.from][params.nonce], "Nonce already used");
+            asyncUsedNonce[params.from][params.nonce] = true;
         } else {
-            require(nonce == nextSyncUsedNonce[from], "Invalid nonce");
-            nextSyncUsedNonce[from]++;
+            require(params.nonce == nextSyncUsedNonce[params.from], "Invalid nonce");
+            nextSyncUsedNonce[params.from]++;
         }
         
         // Update balances (encrypted operations)
-        // Note: Balance checks require external decryption
-        balances[from][token] = FHE.sub(balances[from][token], encryptedAmount);
-        balances[to][token] = FHE.add(balances[to][token], encryptedAmount);
+        balances[params.from][params.token] = FHE.sub(balances[params.from][params.token], encryptedAmount);
+        balances[params.to][params.token] = FHE.add(balances[params.to][params.token], encryptedAmount);
         
         // Handle priority fee if staker
         if (stakerList[msg.sender]) {
-            balances[from][token] = FHE.sub(balances[from][token], encryptedPriorityFee);
-            balances[msg.sender][token] = FHE.add(balances[msg.sender][token], encryptedPriorityFee);
+            balances[params.from][params.token] = FHE.sub(balances[params.from][params.token], encryptedPriorityFee);
+            balances[msg.sender][params.token] = FHE.add(balances[msg.sender][params.token], encryptedPriorityFee);
             _giveReward(msg.sender, 1);
         }
         
         // Allow parties to decrypt their balances
-        FHE.allowThis(balances[from][token]);
-        FHE.allow(balances[from][token], from);
-        FHE.allowThis(balances[to][token]);
-        FHE.allow(balances[to][token], to);
+        FHE.allowThis(balances[params.from][params.token]);
+        FHE.allow(balances[params.from][params.token], params.from);
+        FHE.allowThis(balances[params.to][params.token]);
+        FHE.allow(balances[params.to][params.token], params.to);
         
-        emit PaymentProcessed(from, to, token);
+        emit PaymentProcessed(params.from, params.to, params.token);
     }
 
     // ============ Treasury Exclusive Functions ============
@@ -923,9 +907,8 @@ contract EVVMCore is EthereumConfig, Ownable {
     // ============ Token Whitelist Management ============
     
     /// @notice Add a token to the whitelist
-    /// @param token Token address to add
+    /// @param token Token address to add (address(0) for ETH is allowed)
     function addTokenToWhitelist(address token) external onlyOwner {
-        require(token != address(0), "Invalid token address");
         require(!tokenWhitelist[token], "Token already whitelisted");
         
         tokenWhitelist[token] = true;

@@ -91,6 +91,7 @@ contract EVVMCafhe is EthereumConfig {
         bytes calldata inputPriceProof,
         uint256 nonce,
         bytes memory signature,
+        uint256 priorityFeePlaintext,
         externalEuint64 inputEncryptedPriorityFee,
         bytes calldata inputFeeProof,
         uint256 nonce_EVVM,
@@ -160,17 +161,23 @@ contract EVVMCafhe is EthereumConfig {
          * · All the priority fees paid by the client for this transaction
          * · 1 reward according to the EVVM's reward mechanism
          */
-        evvmCore.pay(
-            clientAddress,
-            address(this),
-            ETHER_ADDRESS,
-            inputEncryptedTotalPrice,
-            inputPriceProof,
-            inputEncryptedPriorityFee,
-            inputFeeProof,
-            nonce_EVVM,
-            priorityFlag_EVVM
-        );
+        EVVMCore.PaymentParams memory paymentParams = EVVMCore.PaymentParams({
+            from: clientAddress,
+            to: address(this),
+            toIdentity: "",
+            token: ETHER_ADDRESS,
+            amountPlaintext: totalPricePlaintext,
+            inputEncryptedAmount: inputEncryptedTotalPrice,
+            inputAmountProof: inputPriceProof,
+            priorityFeePlaintext: priorityFeePlaintext,
+            inputEncryptedPriorityFee: inputEncryptedPriorityFee,
+            inputFeeProof: inputFeeProof,
+            nonce: nonce_EVVM,
+            priorityFlag: priorityFlag_EVVM,
+            executor: address(0),
+            signature: ""
+        });
+        evvmCore.pay(paymentParams);
 
         /**
          * FISHER INCENTIVE SYSTEM:
@@ -231,17 +238,23 @@ contract EVVMCafhe is EthereumConfig {
     ) external onlyOwner {
         // Transfer all accumulated reward tokens to the specified address
         // Using pay() function to transfer from contract to owner
-        evvmCore.pay(
-            address(this),
-            to,
-            PRINCIPAL_TOKEN_ADDRESS,
-            inputEncryptedBalance,
-            inputBalanceProof,
-            inputEncryptedPriorityFee,
-            inputFeeProof,
-            nonce_EVVM,
-            priorityFlag_EVVM
-        );
+        EVVMCore.PaymentParams memory paymentParams = EVVMCore.PaymentParams({
+            from: address(this),
+            to: to,
+            toIdentity: "",
+            token: PRINCIPAL_TOKEN_ADDRESS,
+            amountPlaintext: 0,
+            inputEncryptedAmount: inputEncryptedBalance,
+            inputAmountProof: inputBalanceProof,
+            priorityFeePlaintext: 0,
+            inputEncryptedPriorityFee: inputEncryptedPriorityFee,
+            inputFeeProof: inputFeeProof,
+            nonce: nonce_EVVM,
+            priorityFlag: priorityFlag_EVVM,
+            executor: address(0),
+            signature: ""
+        });
+        evvmCore.pay(paymentParams);
     }
 
     /**
@@ -267,17 +280,23 @@ contract EVVMCafhe is EthereumConfig {
     ) external onlyOwner {
         // Transfer all accumulated ETH to the specified address
         // Using pay() function to transfer from contract to owner
-        evvmCore.pay(
-            address(this),
-            to,
-            ETHER_ADDRESS,
-            inputEncryptedBalance,
-            inputBalanceProof,
-            inputEncryptedPriorityFee,
-            inputFeeProof,
-            nonce_EVVM,
-            priorityFlag_EVVM
-        );
+        EVVMCore.PaymentParams memory paymentParams = EVVMCore.PaymentParams({
+            from: address(this),
+            to: to,
+            toIdentity: "",
+            token: ETHER_ADDRESS,
+            amountPlaintext: 0,
+            inputEncryptedAmount: inputEncryptedBalance,
+            inputAmountProof: inputBalanceProof,
+            priorityFeePlaintext: 0,
+            inputEncryptedPriorityFee: inputEncryptedPriorityFee,
+            inputFeeProof: inputFeeProof,
+            nonce: nonce_EVVM,
+            priorityFlag: priorityFlag_EVVM,
+            executor: address(0),
+            signature: ""
+        });
+        evvmCore.pay(paymentParams);
     }
 
     function isThisNonceUsed(
