@@ -1,0 +1,27 @@
+[workspace]
+members = [
+    "fhe-stylus",
+    "evvm-cafhe",
+]
+resolver = "2"
+
+[workspace.dependencies]
+# Stylus SDK for Arbitrum smart contracts
+stylus-sdk = "0.6.0"
+
+# Alloy for Ethereum types and primitives (pinned to versions without ruint 1.17)
+alloy-primitives = "0.7.2"
+alloy-sol-types = "0.7.2"
+
+# Standard library support
+mini-alloc = "0.6.0"
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+codegen-units = 1
+strip = true
+lto = true
+panic = "abort"
+opt-level = "z"
