@@ -3,6 +3,7 @@ solc = "0.8.24"
 src = "contracts"
 out = "artifacts"
 libs = ["lib"]
+fs_permissions = [{ access = "read-write", path = "./deployments" }]
 
 remappings = [
     '@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/',
