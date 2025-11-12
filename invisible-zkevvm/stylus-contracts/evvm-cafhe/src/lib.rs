@@ -33,11 +33,7 @@ use stylus_sdk::contract;
 use fhe_stylus::prelude::*;
 use fhe_stylus::interfaces::IEVVMCore;
 
-// Use wee_alloc as global allocator
-#[global_allocator]
-static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
-
-// Panic handler for no_std
+// Panic handler for no_std (global allocator provided by stylus-sdk)
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
     loop {}

@@ -25,3 +25,7 @@ strip = true
 lto = true
 panic = "abort"
 opt-level = "z"
+
+# Patch ruint to older version to avoid const evaluation bug in 1.17.0
+[patch.crates-io]
+ruint = { git = "https://github.com/recmo/uint", tag = "v1.12.3" }
