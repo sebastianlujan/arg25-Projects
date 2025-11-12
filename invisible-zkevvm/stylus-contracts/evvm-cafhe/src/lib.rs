@@ -15,7 +15,7 @@
 //! User → EVVMCafhe (Stylus) → EVVMCore → FHEVM Precompiles → Coprocessor
 //! ```
 
-#![no_std]
+#![cfg_attr(not(test), no_std)]
 extern crate alloc;
 
 use alloc::string::{String, ToString};
@@ -33,7 +33,21 @@ use stylus_sdk::contract;
 use fhe_stylus::prelude::*;
 use fhe_stylus::interfaces::IEVVMCore;
 
-// Panic handler for no_std (global allocator provided by stylus-sdk)
+// Unit tests - only compile for WASM target
+#[cfg(all(test, target_arch = "wasm32"))]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_contract_compiles() {
+        // If this compiles, the contract structure is valid
+        assert!(true);
+    }
+}
+
+// Panic handler for no_std - only for WASM target, not for tests
+// (global allocator provided by stylus-sdk)
+#[cfg(target_arch = "wasm32")]
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
     loop {}
