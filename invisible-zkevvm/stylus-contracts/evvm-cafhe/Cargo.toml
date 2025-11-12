@@ -12,7 +12,9 @@ wee_alloc = "0.4.5"
 fhe-stylus = { path = "../fhe-stylus" }
 
 [features]
-default = []
+# Default feature for native builds (tests, docs, etc)
+# WASM builds will use --no-default-features automatically
+default = ["std"]
 # Enable std for native tests
 std = []
 
