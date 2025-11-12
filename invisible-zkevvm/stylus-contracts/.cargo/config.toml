@@ -1,0 +1,5 @@
+[alias]
+# Alias for running tests with std feature (required for native tests)
+test-std = "test --features std"
+# Alias for running all tests (same as test-std)
+t = "test --features std"

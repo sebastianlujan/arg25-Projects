@@ -13,16 +13,8 @@ fhe-stylus = { path = "../fhe-stylus" }
 
 [features]
 default = []
+# Enable std for native tests
+std = []
 
 [lib]
 crate-type = ["lib", "cdylib"]
-
-[profile.dev]
-panic = "abort"
-
-[profile.release]
-codegen-units = 1
-strip = true
-lto = true
-panic = "abort"
-opt-level = "z"

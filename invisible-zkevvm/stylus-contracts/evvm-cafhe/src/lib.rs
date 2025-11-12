@@ -15,7 +15,7 @@
 //! User → EVVMCafhe (Stylus) → EVVMCore → FHEVM Precompiles → Coprocessor
 //! ```
 
-#![cfg_attr(not(test), no_std)]
+#![cfg_attr(not(feature = "std"), no_std)]
 extern crate alloc;
 
 use alloc::string::{String, ToString};
@@ -45,9 +45,9 @@ mod tests {
     }
 }
 
-// Panic handler for no_std - only for WASM target, not for tests
+// Panic handler for no_std - only for WASM target in production, not for tests
 // (global allocator provided by stylus-sdk)
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", not(feature = "std")))]
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
     loop {}

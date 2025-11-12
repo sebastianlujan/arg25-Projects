@@ -19,6 +19,10 @@ mini-alloc = "0.6.0"
 [profile.dev]
 panic = "abort"
 
+# Tests need unwinding panics
+[profile.test]
+panic = "unwind"
+
 [profile.release]
 codegen-units = 1
 strip = true
@@ -27,8 +31,7 @@ panic = "abort"
 opt-level = "z"
 
 # Patch ruint to older version to avoid const evaluation bug in 1.17.0
-# Note: Must use git source because crates.io patch requires different source
 [patch.crates-io]
 ruint = { git = "https://github.com/recmo/uint", rev = "0c07a4c3" }
-parity-scale-codec = { git = "https://github.com/paritytech/parity-scale-codec", tag = "v3.6.12" }
-scale-info = { git = "https://github.com/paritytech/scale-info", tag = "v2.11.3" }
+# Override parity-scale-codec to latest 3.x which is compatible with scale-info 2.11.6
+parity-scale-codec = { git = "https://github.com/paritytech/parity-scale-codec", tag = "v3.7.0" }
