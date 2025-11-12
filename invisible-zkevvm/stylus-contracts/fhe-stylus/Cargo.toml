@@ -1,0 +1,26 @@
+[package]
+name = "fhe-stylus"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "FHE middleware library for Arbitrum Stylus, providing interfaces to Zama FHEVM precompiles"
+
+[dependencies]
+stylus-sdk = { workspace = true }
+wee_alloc = "0.4.5"
+
+[features]
+default = []
+# Network-specific features for precompile addresses
+sepolia = []
+arbitrum-mainnet = []
+arbitrum-testnet = []
+
+[lib]
+crate-type = ["lib"]
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"
