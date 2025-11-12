@@ -6,15 +6,12 @@
 # This file documents the intended toolchain once the upstream issue is resolved.
 
 [toolchain]
-# Use nightly until ruint issue is resolved
-# Recommended: Switch to stable 1.83+ when available
-channel = "nightly"
+# Trying nightly-2024-12-01: should have edition2024 but before panic breaking change
+# nightly-2024-10-01 was too old (no edition2024)
+channel = "nightly-2024-12-01"
 
 # Required targets for Stylus WASM compilation
 targets = ["wasm32-unknown-unknown"]
 
-# Use rustfmt and clippy for code quality
-components = ["rustfmt", "clippy"]
-
-# Pin to specific date if needed for reproducible builds
-# date = "2025-11-11"
+# Use rustfmt and clippy for code quality + rust-src for build-std
+components = ["rustfmt", "clippy", "rust-src"]
