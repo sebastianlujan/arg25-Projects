@@ -4,6 +4,7 @@ pragma solidity ^0.8.24;
 import "./EVVMCoreTestBase.sol";
 import "../library/SignatureRecover.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+import {euint64} from "@fhevm/solidity/lib/FHE.sol";
 
 /**
  * @title EVVMCore_Payments
@@ -285,17 +286,31 @@ contract EVVMCore_Payments is EVVMCoreTestBase {
     }
     
     function test_Pay_WithExecutor() public {
+        // Setup EVVM metadata with principal token (required for staker rewards)
+        vm.prank(ADMIN);
+        EVVMCore.EvvmMetadata memory metadata = EVVMCore.EvvmMetadata({
+            evvmName: "TestEVVM",
+            evvmID: TEST_EVVM_ID,
+            principalTokenName: "TestToken",
+            principalTokenSymbol: "TST",
+            principalTokenAddress: address(0x9999), // Mock principal token address
+            totalSupply: euint64.wrap(bytes32(uint256(1000000))),
+            eraTokens: euint64.wrap(bytes32(uint256(100))),
+            reward: euint64.wrap(bytes32(uint256(10))) // Reward per transaction
+        });
+        evvmCore.setEvvmMetadata(metadata);
+
         // Setup staking contract address first
         address stakingContract = address(0x1234);
         vm.startPrank(ADMIN);
         evvmCore.setStakingContractAddress(stakingContract);
         evvmCore.addValidator(EXECUTOR);
         vm.stopPrank();
-        
+
         // Point staker from staking contract
         vm.prank(stakingContract);
         evvmCore.pointStaker(EXECUTOR, 0x01); // Make executor a staker
-        
+
         addBalanceToUser(USER1, ETHER_ADDRESS, TEST_AMOUNT + TEST_PRIORITY_FEE);
         
         externalEuint64 encryptedAmount = createMockEncryptedEuint64(uint64(TEST_AMOUNT));

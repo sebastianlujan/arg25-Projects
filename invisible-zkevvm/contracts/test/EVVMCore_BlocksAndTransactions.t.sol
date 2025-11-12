@@ -65,8 +65,12 @@ contract EVVMCore_BlocksAndTransactions is EVVMCoreTestBase {
         externalEuint256 encryptedGasLimit = createMockEncryptedEuint256(TEST_GAS_LIMIT);
         address[] memory validators = new address[](1);
         validators[0] = VALIDATOR1;
-        
-        vm.prank(VALIDATOR1);
+
+        // Add test contract as validator first so we pass onlyValidator check
+        // This way we can test the onlyInitialized check
+        vm.prank(address(this)); // Owner of newEvvm is this test contract
+        newEvvm.addValidator(address(this));
+
         vm.expectRevert("Not initialized");
         newEvvm.createVirtualBlock(encryptedGasLimit, MOCK_PROOF, validators);
     }
