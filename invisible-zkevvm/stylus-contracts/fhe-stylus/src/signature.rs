@@ -20,8 +20,8 @@
 //! }
 //! ```
 
-use stylus_sdk::alloy_primitives::{Address, keccak256, FixedBytes, B256};
-use alloc::string::{String, ToString};
+use stylus_sdk::alloy_primitives::{Address, keccak256, B256};
+use alloc::string::ToString;
 use alloc::vec::Vec;
 use alloc::format;
 
@@ -251,7 +251,7 @@ mod tests {
         let result = SignatureRecover::split_signature(&sig);
         assert!(result.is_ok());
 
-        let (r, s, v) = result.unwrap();
+        let (_r, _s, v) = result.unwrap();
         assert_eq!(v, 27);
     }
 

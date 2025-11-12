@@ -11,6 +11,9 @@
 //! - FHE bitwise operations (and, or, xor, not, shl, shr)
 //! - Access control for encrypted values
 
+// Allow non-snake-case names to match Solidity interface conventions
+#![allow(non_snake_case)]
+
 use stylus_sdk::prelude::*;
 use stylus_sdk::alloy_sol_types;
 

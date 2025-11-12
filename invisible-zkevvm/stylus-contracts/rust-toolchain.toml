@@ -1,17 +1,4 @@
-# Rust Toolchain Configuration
-#
-# NOTE: Due to current ruint 1.17.0 compatibility issues, this project
-# cannot compile with any stable Rust version. See KNOWN_ISSUES.md.
-#
-# This file documents the intended toolchain once the upstream issue is resolved.
-
 [toolchain]
-# Trying nightly-2024-12-01: should have edition2024 but before panic breaking change
-# nightly-2024-10-01 was too old (no edition2024)
-channel = "nightly-2024-12-01"
-
-# Required targets for Stylus WASM compilation
+channel = "nightly-2025-11-10"
+components = ["rustfmt", "clippy"]
 targets = ["wasm32-unknown-unknown"]
-
-# Use rustfmt and clippy for code quality + rust-src for build-std
-components = ["rustfmt", "clippy", "rust-src"]

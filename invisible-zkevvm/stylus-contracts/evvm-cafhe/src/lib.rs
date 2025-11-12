@@ -23,8 +23,8 @@ use alloc::vec::Vec;
 use alloc::format;
 
 use stylus_sdk::prelude::*;
-use stylus_sdk::alloy_primitives::{Address, U256, FixedBytes};
-use stylus_sdk::storage::{StorageMap, StorageAddress, StorageBool, StorageU256};
+use stylus_sdk::alloy_primitives::{Address, U256};
+use stylus_sdk::storage::{StorageMap, StorageAddress, StorageBool};
 use stylus_sdk::call::Call;
 use stylus_sdk::msg;
 use stylus_sdk::contract;
@@ -357,33 +357,20 @@ impl EVVMCafhe {
         ETHER_ADDRESS
     }
 
-    /// Get encrypted balance of principal tokens in the shop
-    ///
-    /// # Returns
-    /// Encrypted balance (euint64) - decrypt with SDK off-chain
-    pub fn get_amount_of_principal_token_in_shop(&self) -> Euint64 {
-        let evvm_core_addr = self.evvm_core.get();
-        let evvm_core = IEVVMCore::new(evvm_core_addr);
-
-        // For view functions, we need to use a different approach
-        // Since we can't get mutable reference, return zero or handle differently
-        // In practice, this would use static_call
-        FixedBytes::ZERO
-    }
-
-    /// Get encrypted balance of ETH in the shop
-    ///
-    /// # Returns
-    /// Encrypted balance (euint64) - decrypt with SDK off-chain
-    pub fn get_amount_of_ether_in_shop(&self) -> Euint64 {
-        let evvm_core_addr = self.evvm_core.get();
-        let evvm_core = IEVVMCore::new(evvm_core_addr);
-
-        // For view functions, we need to use a different approach
-        // Since we can't get mutable reference, return zero or handle differently
-        // In practice, this would use static_call
-        FixedBytes::ZERO
-    }
+    // NOTE: View functions for encrypted balances have been removed
+    // because they always returned zero (silent failure).
+    //
+    // Stylus limitation: Cannot call EVVMCore's view functions without
+    // mutable reference to self. These functions created false expectations
+    // by appearing to work but always returning FixedBytes::ZERO.
+    //
+    // To get encrypted balances, use EVVMCore directly:
+    //   - get_encrypted_eth_balance(shop_address)
+    //   - get_encrypted_token_balance(shop_address, token_id)
+    //
+    // Removed functions:
+    //   - get_amount_of_principal_token_in_shop()
+    //   - get_amount_of_ether_in_shop()
 
     /// Get the EVVM Core contract address
     pub fn get_evvm_address(&self) -> Address {
