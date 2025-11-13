@@ -11,9 +11,9 @@ You'll update your progress weekly **in the same PR**, so mentors and reviewers 
 
 ## Team
 
-- Team/Individual Name: Sebastian Lujan Artur Vargas
-- GitHub Handles: @sebastianlujan @ArturVargas
-- Devfolio Handles: sebas_eth 0xVato
+- Team/Individual Name: Sebastian Lujan, Artur Vargas
+- GitHub Handles: @sebastianlujan, @ArturVargas
+- Devfolio Handles: sebas_eth, 0xVato
 
 ## Project Description
 
