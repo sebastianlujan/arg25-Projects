@@ -1,0 +1,4 @@
+{
+  "extends": "solhint:recommended",
+  "ignoreFiles": ["**/node_modules/**", "**/lib/**", "**/out/**"]
+}

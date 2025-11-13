@@ -1,0 +1,201 @@
+EVVMCore=0xd2c09694f325B821060560A13d538b5B51befC79
+
+make -f Makefile.foundry deploy
+Checking environment... 
+✓ Environment configured 
+Checking deployer balance... 
+98545961082229078
+Deploying EVVMCore to Arbitrum Sepolia... 
+forge script script/DeployEVVMCore.s.sol:DeployEVVMCore \
+		--rpc-url https://sepolia-rollup.arbitrum.io/rpc \
+		--broadcast \
+		-vvvv
+[⠊] Compiling...
+No files changed, compilation skipped
+Traces:
+  [4801481] DeployEVVMCore::run()
+    ├─ [0] VM::envUint("PRIVATE_KEY") [staticcall]
+    │   └─ ← [Return] <env var value>
+    ├─ [0] VM::addr(<pk>) [staticcall]
+    │   └─ ← [Return] 0x1c004b4357709cCe7fcF904BB70Ad01b3A299129
+    ├─ [0] console::log("=================================================") [staticcall]
+    │   └─ ← [Stop]
+    ├─ [0] console::log("Deploying EVVMCore Contract") [staticcall]
+    │   └─ ← [Stop]
+    ├─ [0] console::log("=================================================") [staticcall]
+    │   └─ ← [Stop]
+    ├─ [0] console::log("Deployer address:", 0x1c004b4357709cCe7fcF904BB70Ad01b3A299129) [staticcall]
+    │   └─ ← [Stop]
+    ├─ [0] console::log("Deployer balance:", 98545961082229078 [9.854e16]) [staticcall]
+    │   └─ ← [Stop]
+    ├─ [0] console::log("Chain ID:", 421614 [4.216e5]) [staticcall]
+    │   └─ ← [Stop]
+    ├─ [0] console::log("Chain Name:", "EVVM Test Chain") [staticcall]
+    │   └─ ← [Stop]
+    ├─ [0] console::log("Initial Gas Limit:", 30000000 [3e7]) [staticcall]
+    │   └─ ← [Stop]
+    ├─ [0] console::log("=================================================") [staticcall]
+    │   └─ ← [Stop]
+    ├─ [0] VM::startBroadcast(<pk>)
+    │   └─ ← [Return]
+    ├─ [0] console::log("\nDeploying EVVMCore...") [staticcall]
+    │   └─ ← [Stop]
+    ├─ [4533994] → new EVVMCore@0xd2c09694f325B821060560A13d538b5B51befC79
+    │   ├─ emit OwnershipTransferred(previousOwner: 0x0000000000000000000000000000000000000000, newOwner: 0x1c004b4357709cCe7fcF904BB70Ad01b3A299129)
+    │   └─ ← [Return] 22304 bytes of code
+    ├─ [0] console::log("EVVMCore deployed at:", EVVMCore: [0xd2c09694f325B821060560A13d538b5B51befC79]) [staticcall]
+    │   └─ ← [Stop]
+    ├─ [0] console::log("\nInitializing virtual chain...") [staticcall]
+    │   └─ ← [Stop]
+    ├─ [115288] EVVMCore::initializeVirtualChain("EVVM Test Chain", 30000000 [3e7])
+    │   ├─ emit VirtualChainInitialized(chainName: "EVVM Test Chain", timestamp: 1762936433 [1.762e9], initialGasLimit: 30000000 [3e7])
+    │   └─ ← [Stop]
+    ├─ [0] console::log("Virtual chain initialized successfully") [staticcall]
+    │   └─ ← [Stop]
+    ├─ [0] console::log("\nAdding deployer as initial validator...") [staticcall]
+    │   └─ ← [Stop]
+    ├─ [69374] EVVMCore::addValidator(0x1c004b4357709cCe7fcF904BB70Ad01b3A299129)
+    │   ├─ emit ValidatorAdded(validator: 0x1c004b4357709cCe7fcF904BB70Ad01b3A299129, by: 0x1c004b4357709cCe7fcF904BB70Ad01b3A299129)
+    │   └─ ← [Stop]
+    ├─ [0] console::log("Deployer added as validator") [staticcall]
+    │   └─ ← [Stop]
+    ├─ [0] VM::stopBroadcast()
+    │   └─ ← [Return]
+    ├─ [0] console::log("\n=================================================") [staticcall]
+    │   └─ ← [Stop]
+    ├─ [0] console::log("Deployment Summary") [staticcall]
+    │   └─ ← [Stop]
+    ├─ [0] console::log("=================================================") [staticcall]
+    │   └─ ← [Stop]
+    ├─ [0] console::log("EVVMCore Address:", EVVMCore: [0xd2c09694f325B821060560A13d538b5B51befC79]) [staticcall]
+    │   └─ ← [Stop]
+    ├─ [1207] EVVMCore::owner() [staticcall]
+    │   └─ ← [Return] 0x1c004b4357709cCe7fcF904BB70Ad01b3A299129
+    ├─ [0] console::log("Owner:", 0x1c004b4357709cCe7fcF904BB70Ad01b3A299129) [staticcall]
+    │   └─ ← [Stop]
+    ├─ [1145] EVVMCore::chainName() [staticcall]
+    │   └─ ← [Return] "EVVM Test Chain"
+    ├─ [0] console::log("Chain Name:", "EVVM Test Chain") [staticcall]
+    │   └─ ← [Stop]
+    ├─ [1866] EVVMCore::initialGasLimit() [staticcall]
+    │   └─ ← [Return] 30000000 [3e7]
+    ├─ [0] console::log("Initial Gas Limit:", 30000000 [3e7]) [staticcall]
+    │   └─ ← [Stop]
+    ├─ [448] EVVMCore::initialized() [staticcall]
+    │   └─ ← [Return] true
+    ├─ [0] console::log("Initialized:", true) [staticcall]
+    │   └─ ← [Stop]
+    ├─ [1109] EVVMCore::getCurrentBlockNumber() [staticcall]
+    │   └─ ← [Return] 0
+    ├─ [0] console::log("Current Block Number:", 0) [staticcall]
+    │   └─ ← [Stop]
+    ├─ [0] console::log("=================================================") [staticcall]
+    │   └─ ← [Stop]
+    ├─ [0] VM::toString(EVVMCore: [0xd2c09694f325B821060560A13d538b5B51befC79]) [staticcall]
+    │   └─ ← [Return] "0xd2c09694f325B821060560A13d538b5B51befC79"
+    ├─ [0] VM::writeFile("./deployments/arbitrum-sepolia.txt", "EVVMCore=0xd2c09694f325B821060560A13d538b5B51befC79\n")
+    │   └─ ← [Return]
+    ├─ [0] console::log("\nDeployment addresses saved to: ./deployments/arbitrum-sepolia.txt") [staticcall]
+    │   └─ ← [Stop]
+    ├─ [0] VM::toString(EVVMCore: [0xd2c09694f325B821060560A13d538b5B51befC79]) [staticcall]
+    │   └─ ← [Return] "0xd2c09694f325B821060560A13d538b5B51befC79"
+    ├─ [0] VM::writeFile("./deployments/arbitrum-sepolia.env", "EVVM_CORE_ADDRESS=0xd2c09694f325B821060560A13d538b5B51befC79\n")
+    │   └─ ← [Return]
+    ├─ [0] console::log("Environment variables saved to: ./deployments/arbitrum-sepolia.env") [staticcall]
+    │   └─ ← [Stop]
+    └─ ← [Return]
+
+
+Script ran successfully.
+
+== Logs ==
+  =================================================
+  Deploying EVVMCore Contract
+  =================================================
+  Deployer address: 0x1c004b4357709cCe7fcF904BB70Ad01b3A299129
+  Deployer balance: 98545961082229078
+  Chain ID: 421614
+  Chain Name: EVVM Test Chain
+  Initial Gas Limit: 30000000
+  =================================================
+  
+Deploying EVVMCore...
+  EVVMCore deployed at: 0xd2c09694f325B821060560A13d538b5B51befC79
+  
+Initializing virtual chain...
+  Virtual chain initialized successfully
+  
+Adding deployer as initial validator...
+  Deployer added as validator
+  
+=================================================
+  Deployment Summary
+  =================================================
+  EVVMCore Address: 0xd2c09694f325B821060560A13d538b5B51befC79
+  Owner: 0x1c004b4357709cCe7fcF904BB70Ad01b3A299129
+  Chain Name: EVVM Test Chain
+  Initial Gas Limit: 30000000
+  Initialized: true
+  Current Block Number: 0
+  =================================================
+  
+Deployment addresses saved to: ./deployments/arbitrum-sepolia.txt
+  Environment variables saved to: ./deployments/arbitrum-sepolia.env
+
+## Setting up 1 EVM.
+==========================
+Simulated On-chain Traces:
+
+  [4533994] → new EVVMCore@0xd2c09694f325B821060560A13d538b5B51befC79
+    ├─ emit OwnershipTransferred(previousOwner: 0x0000000000000000000000000000000000000000, newOwner: 0x1c004b4357709cCe7fcF904BB70Ad01b3A299129)
+    └─ ← [Return] 22304 bytes of code
+
+  [117288] EVVMCore::initializeVirtualChain("EVVM Test Chain", 30000000 [3e7])
+    ├─ emit VirtualChainInitialized(chainName: "EVVM Test Chain", timestamp: 1762936437 [1.762e9], initialGasLimit: 30000000 [3e7])
+    └─ ← [Stop]
+
+  [71374] EVVMCore::addValidator(0x1c004b4357709cCe7fcF904BB70Ad01b3A299129)
+    ├─ emit ValidatorAdded(validator: 0x1c004b4357709cCe7fcF904BB70Ad01b3A299129, by: 0x1c004b4357709cCe7fcF904BB70Ad01b3A299129)
+    └─ ← [Stop]
+
+
+==========================
+
+Chain 421614
+
+Estimated gas price: 0.200000001 gwei
+
+Estimated total gas used for script: 6547355
+
+Estimated amount required: 0.001309471006547355 ETH
+
+==========================
+
+##### arbitrum-sepolia
+✅  [Success] Hash: 0x02231afacaba2490da159e46f989657ab4fd05aeac720b06ac5b20c0b7a22256
+Contract Address: 0xd2c09694f325B821060560A13d538b5B51befC79
+Block: 214398270
+Paid: 0.0004952376 ETH (4952376 gas * 0.1 gwei)
+
+
+##### arbitrum-sepolia
+✅  [Success] Hash: 0x3d920416e10b9cb6f5693fbd1401eb2faaab65e44ecc6606c0fd17b5f92c77ac
+Block: 214398282
+Paid: 0.0000139116 ETH (139116 gas * 0.1 gwei)
+
+
+##### arbitrum-sepolia
+✅  [Success] Hash: 0x836e01fb17b26663c549e9089d390c3b01a6cbff88ee523053a02a998afdf6de
+Block: 214398294
+Paid: 0.0000092794 ETH (92794 gas * 0.1 gwei)
+
+✅ Sequence #1 on arbitrum-sepolia | Total Paid: 0.0005184286 ETH (5184286 gas * avg 0.1 gwei)
+                                                                               
+
+==========================
+
+ONCHAIN EXECUTION COMPLETE & SUCCESSFUL.
+
+Transactions saved to: /Users/glitch/Development/after5/InvisibleGarden/arg25-Projects/invisible-zkevvm/broadcast/DeployEVVMCore.s.sol/421614/run-latest.json
+
+Sensitive values saved to: /Users/glitch/Development/after5/InvisibleGarden/arg25-Projects/invisible-zkevvm/cache/DeployEVVMCore.s.sol/421614/run-latest.json
