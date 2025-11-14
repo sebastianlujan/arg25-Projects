@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.25;
 
-import {FHE, euint64, externalEuint64} from "@fhevm/solidity/lib/FHE.sol";
-import {EthereumConfig} from "@fhevm/solidity/config/ZamaConfig.sol";
+import {FHE, euint64, InEuint64} from "@fhenixprotocol/cofhe-contracts/FHE.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import "../core/EVVMCore.sol";
 import "../library/SignatureRecover.sol";
 
 /// @title EVVM Cafhe - Coffee Shop with FHE
-/// @notice Example contract demonstrating EVVM integration with encrypted payments
+/// @notice Example contract demonstrating EVVM integration with encrypted payments using Fhenix CoFHE
 /// @dev All payment amounts are encrypted using FHE for privacy
-contract EVVMCafhe is EthereumConfig {
+/// @dev Follows CoFHE best practices: proper access control, encrypted inputs
+contract EVVMCafhe {
 
     /// @notice Thrown when a provided signature is invalid or verification fails
     error InvalidSignature();
@@ -63,12 +63,10 @@ contract EVVMCafhe is EthereumConfig {
      * @param coffeeType Type/name of coffee being ordered (e.g., "Espresso", "Latte")
      * @param quantity Number of coffee units being ordered
      * @param totalPricePlaintext Total price in plaintext (for signature verification)
-     * @param inputEncryptedTotalPrice Encrypted total price to be paid in ETH (externalEuint64)
-     * @param inputPriceProof Proof for encrypted total price
+     * @param inputEncryptedTotalPrice Encrypted total price to be paid in ETH (InEuint64)
      * @param nonce Unique number to prevent replay attacks (must not be reused)
      * @param signature Client's signature authorizing the coffee order
-     * @param inputEncryptedPriorityFee Encrypted priority fee for EVVM transaction (externalEuint64)
-     * @param inputFeeProof Proof for encrypted priority fee
+     * @param inputEncryptedPriorityFee Encrypted priority fee for EVVM transaction (InEuint64)
      * @param nonce_EVVM Unique nonce for the EVVM payment transaction
      * @param priorityFlag_EVVM Boolean flag indicating the type of nonce we are using
      *                          (true for async nonce, false for sync nonce)
@@ -81,19 +79,18 @@ contract EVVMCafhe is EthereumConfig {
      * 
      * @dev Note: totalPricePlaintext is used for signature verification only.
      *      The actual payment uses inputEncryptedTotalPrice for privacy.
+     * @dev CoFHE handles proof verification internally
      */
     function orderCoffee(
         address clientAddress,
         string memory coffeeType,
         uint256 quantity,
         uint256 totalPricePlaintext,
-        externalEuint64 inputEncryptedTotalPrice,
-        bytes calldata inputPriceProof,
+        InEuint64 memory inputEncryptedTotalPrice,
         uint256 nonce,
         bytes memory signature,
         uint256 priorityFeePlaintext,
-        externalEuint64 inputEncryptedPriorityFee,
-        bytes calldata inputFeeProof,
+        InEuint64 memory inputEncryptedPriorityFee,
         uint256 nonce_EVVM,
         bool priorityFlag_EVVM
     ) external {
@@ -168,10 +165,8 @@ contract EVVMCafhe is EthereumConfig {
             token: ETHER_ADDRESS,
             amountPlaintext: totalPricePlaintext,
             inputEncryptedAmount: inputEncryptedTotalPrice,
-            inputAmountProof: inputPriceProof,
             priorityFeePlaintext: priorityFeePlaintext,
             inputEncryptedPriorityFee: inputEncryptedPriorityFee,
-            inputFeeProof: inputFeeProof,
             nonce: nonce_EVVM,
             priorityFlag: priorityFlag_EVVM,
             executor: address(0),
@@ -220,21 +215,18 @@ contract EVVMCafhe is EthereumConfig {
      * @dev Only callable by the coffee shop owner
      *
      * @param to Address where the withdrawn reward tokens will be sent
-     * @param inputEncryptedBalance Encrypted balance to withdraw (externalEuint64)
-     * @param inputBalanceProof Proof for encrypted balance
+     * @param inputEncryptedBalance Encrypted balance to withdraw (InEuint64)
      * @param nonce_EVVM Nonce for the EVVM payment transaction
      * @param priorityFlag_EVVM Boolean flag for nonce type
-     * @param inputEncryptedPriorityFee Encrypted priority fee (externalEuint64)
-     * @param inputFeeProof Proof for encrypted priority fee
+     * @param inputEncryptedPriorityFee Encrypted priority fee (InEuint64)
+     * @dev CoFHE handles proof verification internally
      */
     function withdrawRewards(
         address to,
-        externalEuint64 inputEncryptedBalance,
-        bytes calldata inputBalanceProof,
+        InEuint64 memory inputEncryptedBalance,
         uint256 nonce_EVVM,
         bool priorityFlag_EVVM,
-        externalEuint64 inputEncryptedPriorityFee,
-        bytes calldata inputFeeProof
+        InEuint64 memory inputEncryptedPriorityFee
     ) external onlyOwner {
         // Transfer all accumulated reward tokens to the specified address
         // Using pay() function to transfer from contract to owner
@@ -245,10 +237,8 @@ contract EVVMCafhe is EthereumConfig {
             token: PRINCIPAL_TOKEN_ADDRESS,
             amountPlaintext: 0,
             inputEncryptedAmount: inputEncryptedBalance,
-            inputAmountProof: inputBalanceProof,
             priorityFeePlaintext: 0,
             inputEncryptedPriorityFee: inputEncryptedPriorityFee,
-            inputFeeProof: inputFeeProof,
             nonce: nonce_EVVM,
             priorityFlag: priorityFlag_EVVM,
             executor: address(0),
@@ -262,21 +252,18 @@ contract EVVMCafhe is EthereumConfig {
      * @dev Only callable by the coffee shop owner
      *
      * @param to Address where the withdrawn ETH will be sent
-     * @param inputEncryptedBalance Encrypted balance to withdraw (externalEuint64)
-     * @param inputBalanceProof Proof for encrypted balance
+     * @param inputEncryptedBalance Encrypted balance to withdraw (InEuint64)
      * @param nonce_EVVM Nonce for the EVVM payment transaction
      * @param priorityFlag_EVVM Boolean flag for nonce type
-     * @param inputEncryptedPriorityFee Encrypted priority fee (externalEuint64)
-     * @param inputFeeProof Proof for encrypted priority fee
+     * @param inputEncryptedPriorityFee Encrypted priority fee (InEuint64)
+     * @dev CoFHE handles proof verification internally
      */
     function withdrawFunds(
         address to,
-        externalEuint64 inputEncryptedBalance,
-        bytes calldata inputBalanceProof,
+        InEuint64 memory inputEncryptedBalance,
         uint256 nonce_EVVM,
         bool priorityFlag_EVVM,
-        externalEuint64 inputEncryptedPriorityFee,
-        bytes calldata inputFeeProof
+        InEuint64 memory inputEncryptedPriorityFee
     ) external onlyOwner {
         // Transfer all accumulated ETH to the specified address
         // Using pay() function to transfer from contract to owner
@@ -287,10 +274,8 @@ contract EVVMCafhe is EthereumConfig {
             token: ETHER_ADDRESS,
             amountPlaintext: 0,
             inputEncryptedAmount: inputEncryptedBalance,
-            inputAmountProof: inputBalanceProof,
             priorityFeePlaintext: 0,
             inputEncryptedPriorityFee: inputEncryptedPriorityFee,
-            inputFeeProof: inputFeeProof,
             nonce: nonce_EVVM,
             priorityFlag: priorityFlag_EVVM,
             executor: address(0),

@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.25;
 
-import {FHE, euint64, euint256, ebool, externalEuint256, externalEuint64} from "@fhevm/solidity/lib/FHE.sol";
-import {EthereumConfig} from "@fhevm/solidity/config/ZamaConfig.sol";
+import {FHE, euint8, euint64, euint256, ebool, InEuint64, InEuint256} from "@fhenixprotocol/cofhe-contracts/FHE.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "../interfaces/IEVVMStylus.sol";
 import "../library/SignatureUtils.sol";
 
 /// @title EVVM Core - Virtual Blockchain with FHE
 /// @notice Main contract for the Ethereum Virtual Virtual Machine
-/// @dev Implements a virtual blockchain with encrypted blocks and transactions using Zama FHEVM
-contract EVVMCore is EthereumConfig, Ownable {
+/// @dev Implements a virtual blockchain with encrypted blocks and transactions using Fhenix CoFHE
+/// @dev Follows CoFHE best practices: encrypted constants, proper access control, constant-time computation
+contract EVVMCore is Ownable {
     // ============ Structs ============
     
     /// @notice EVVM metadata structure
@@ -46,11 +46,9 @@ contract EVVMCore is EthereumConfig, Ownable {
         string toIdentity;
         address token;
         uint256 amountPlaintext;
-        externalEuint64 inputEncryptedAmount;
-        bytes inputAmountProof;
+        InEuint64 inputEncryptedAmount;
         uint256 priorityFeePlaintext;
-        externalEuint64 inputEncryptedPriorityFee;
-        bytes inputFeeProof;
+        InEuint64 inputEncryptedPriorityFee;
         uint256 nonce;
         bool priorityFlag;
         address executor;
@@ -136,6 +134,13 @@ contract EVVMCore is EthereumConfig, Ownable {
     EvvmMetadata public evvmMetadata;
     AddressTypeProposal public admin;
     
+    // Encrypted constants for gas optimization (CoFHE best practice)
+    euint64 private EUINT64_ZERO;
+    euint64 private EUINT64_ONE;
+    euint256 private EUINT256_ZERO;
+    ebool private EBOOL_FALSE;
+    ebool private EBOOL_TRUE;
+    
     // ============ Events ============
     
     event VirtualChainInitialized(string chainName, uint256 timestamp, uint256 initialGasLimit);
@@ -172,7 +177,13 @@ contract EVVMCore is EthereumConfig, Ownable {
     // ============ Constructor ============
     
     constructor() Ownable(msg.sender) {
-        // Constructor is empty - initialization happens via initializeVirtualChain
+        // Initialize encrypted constants once in constructor to save gas (CoFHE best practice)
+        EUINT64_ZERO = FHE.asEuint64(0);
+        EUINT64_ONE = FHE.asEuint64(1);
+        EUINT256_ZERO = FHE.asEuint256(0);
+        EBOOL_FALSE = FHE.asEbool(false);
+        EBOOL_TRUE = FHE.asEbool(true);
+        
         windowTimeToChangeEvvmID = block.timestamp + 1 days;
         admin.current = msg.sender; // Initialize admin
     }
@@ -234,13 +245,11 @@ contract EVVMCore is EthereumConfig, Ownable {
     // ============ Block Operations ============
     
     /// @notice Create a new virtual block (FHE encrypted)
-    /// @param inputGasLimit Encrypted gas limit for the block
-    /// @param inputProof Proof for the encrypted gas limit
+    /// @param inputGasLimit Encrypted gas limit for the block (InEuint256)
     /// @param _validators Array of validators for this block
     /// @return blockNumber The number of the created block
     function createVirtualBlock(
-        externalEuint256 inputGasLimit,
-        bytes calldata inputProof,
+        InEuint256 memory inputGasLimit,
         address[] calldata _validators
     ) external onlyValidator onlyInitialized returns (uint64 blockNumber) {
         // Validate validators
@@ -248,8 +257,8 @@ contract EVVMCore is EthereumConfig, Ownable {
             require(validators[_validators[i]], "Invalid validator");
         }
         
-        // Convert external encrypted input to internal euint256
-        euint256 encryptedGasLimit = FHE.fromExternal(inputGasLimit, inputProof);
+        // Convert encrypted input to internal euint256
+        euint256 encryptedGasLimit = FHE.asEuint256(inputGasLimit);
         
         // Create encrypted timestamp
         euint256 encryptedTimestamp = FHE.asEuint256(block.timestamp);
@@ -266,10 +275,10 @@ contract EVVMCore is EthereumConfig, Ownable {
         virtualBlock.timestamp = encryptedTimestamp;
         virtualBlock.gasLimit = encryptedGasLimit;
         virtualBlock.validators = _validators;
-        virtualBlock.isFinalized = FHE.asEbool(false);
+        virtualBlock.isFinalized = EBOOL_FALSE;
         virtualBlock.blockHash = blockHash;
         
-        // Allow validators to decrypt block info
+        // Always update permissions after modifying encrypted values (CoFHE best practice)
         FHE.allowThis(virtualBlock.blockNumber);
         FHE.allowThis(virtualBlock.timestamp);
         FHE.allowThis(virtualBlock.gasLimit);
@@ -332,20 +341,18 @@ contract EVVMCore is EthereumConfig, Ownable {
     
     /// @notice Submit an encrypted transaction
     /// @param to Recipient address
-    /// @param inputEncryptedValue Encrypted value to send
-    /// @param inputValueProof Proof for encrypted value
+    /// @param inputEncryptedValue Encrypted value to send (InEuint256)
     /// @param data Data payload (can be encrypted off-chain before submission)
     /// @return txId The transaction ID
     function submitTransaction(
         address to,
-        externalEuint256 inputEncryptedValue,
-        bytes calldata inputValueProof,
+        InEuint256 memory inputEncryptedValue,
         bytes calldata data
     ) external onlyInitialized returns (uint256 txId) {
         require(to != address(0), "Invalid recipient");
         
-        // Convert external encrypted input to internal type
-        euint256 encryptedValue = FHE.fromExternal(inputEncryptedValue, inputValueProof);
+        // Convert encrypted input to internal type
+        euint256 encryptedValue = FHE.asEuint256(inputEncryptedValue);
         
         // Create transaction
         txId = nextTxId;
@@ -358,14 +365,14 @@ contract EVVMCore is EthereumConfig, Ownable {
         transaction.value = encryptedValue;
         transaction.data = data;
         transaction.dataHash = keccak256(data);
-        transaction.gasUsed = FHE.asEuint256(0); // Will be updated when included in block
-        transaction.isIncluded = FHE.asEbool(false);
+        transaction.gasUsed = EUINT256_ZERO; // Will be updated when included in block
+        transaction.isIncluded = EBOOL_FALSE;
         
-        // Allow sender and recipient to decrypt transaction value
+        // Always update permissions after modifying encrypted values (CoFHE best practice)
         FHE.allowThis(transaction.txId);
         FHE.allowThis(transaction.value);
-        FHE.allow(transaction.txId, msg.sender);
-        FHE.allow(transaction.value, msg.sender);
+        FHE.allowSender(transaction.txId);
+        FHE.allowSender(transaction.value);
         FHE.allow(transaction.value, to);
         
         emit TransactionSubmitted(txId, msg.sender, to);
@@ -376,13 +383,11 @@ contract EVVMCore is EthereumConfig, Ownable {
     /// @notice Include a transaction in a block
     /// @param txId Transaction ID to include
     /// @param blockNumber Block number to include transaction in
-    /// @param inputGasUsed Encrypted gas used for the transaction
-    /// @param inputGasProof Proof for encrypted gas used
+    /// @param inputGasUsed Encrypted gas used for the transaction (InEuint256)
     function includeTransactionInBlock(
         uint256 txId,
         uint64 blockNumber,
-        externalEuint256 inputGasUsed,
-        bytes calldata inputGasProof
+        InEuint256 memory inputGasUsed
     ) external onlyValidator onlyInitialized {
         require(txId > 0 && txId < nextTxId, "Invalid transaction");
         require(blockNumber > 0 && blockNumber < nextBlockNumber, "Invalid block");
@@ -390,15 +395,15 @@ contract EVVMCore is EthereumConfig, Ownable {
         VirtualTransaction storage transaction = virtualTransactions[txId];
         
         // Convert and set gas used
-        euint256 encryptedGasUsed = FHE.fromExternal(inputGasUsed, inputGasProof);
+        euint256 encryptedGasUsed = FHE.asEuint256(inputGasUsed);
         transaction.gasUsed = encryptedGasUsed;
         transaction.blockNumber = FHE.asEuint64(blockNumber);
-        transaction.isIncluded = FHE.asEbool(true);
+        transaction.isIncluded = EBOOL_TRUE;
         
-        // Allow access to gas used
+        // Always update permissions after modifying encrypted values (CoFHE best practice)
         FHE.allowThis(transaction.gasUsed);
         FHE.allowThis(transaction.isIncluded);
-        FHE.allow(transaction.gasUsed, transaction.from);
+        FHE.allowSender(transaction.gasUsed);
     }
 
     // ============ View Functions ============
@@ -592,25 +597,20 @@ contract EVVMCore is EthereumConfig, Ownable {
     }
     
     /// @notice Initialize encrypted metadata fields
-    /// @param _totalSupply Encrypted total supply (externalEuint64)
-    /// @param _totalSupplyProof Proof for total supply
-    /// @param _eraTokens Encrypted era tokens (externalEuint64)
-    /// @param _eraTokensProof Proof for era tokens
-    /// @param _reward Encrypted reward amount (externalEuint64)
-    /// @param _rewardProof Proof for reward
+    /// @param _totalSupply Encrypted total supply (InEuint64)
+    /// @param _eraTokens Encrypted era tokens (InEuint64)
+    /// @param _reward Encrypted reward amount (InEuint64)
+    /// @dev CoFHE handles proof verification internally
     function initializeEncryptedMetadata(
-        externalEuint64 _totalSupply,
-        bytes calldata _totalSupplyProof,
-        externalEuint64 _eraTokens,
-        bytes calldata _eraTokensProof,
-        externalEuint64 _reward,
-        bytes calldata _rewardProof
+        InEuint64 memory _totalSupply,
+        InEuint64 memory _eraTokens,
+        InEuint64 memory _reward
     ) external onlyOwner {
-        evvmMetadata.totalSupply = FHE.fromExternal(_totalSupply, _totalSupplyProof);
-        evvmMetadata.eraTokens = FHE.fromExternal(_eraTokens, _eraTokensProof);
-        evvmMetadata.reward = FHE.fromExternal(_reward, _rewardProof);
+        evvmMetadata.totalSupply = FHE.asEuint64(_totalSupply);
+        evvmMetadata.eraTokens = FHE.asEuint64(_eraTokens);
+        evvmMetadata.reward = FHE.asEuint64(_reward);
         
-        // Allow owner to decrypt
+        // Always update permissions after modifying encrypted values (CoFHE best practice)
         FHE.allowThis(evvmMetadata.totalSupply);
         FHE.allowThis(evvmMetadata.eraTokens);
         FHE.allowThis(evvmMetadata.reward);
@@ -674,9 +674,9 @@ contract EVVMCore is EthereumConfig, Ownable {
             require(msg.sender == params.executor, "Not the executor");
         }
         
-        // Convert external encrypted inputs
-        euint64 encryptedAmount = FHE.fromExternal(params.inputEncryptedAmount, params.inputAmountProof);
-        euint64 encryptedPriorityFee = FHE.fromExternal(params.inputEncryptedPriorityFee, params.inputFeeProof);
+        // Convert encrypted inputs (CoFHE handles proof verification internally)
+        euint64 encryptedAmount = FHE.asEuint64(params.inputEncryptedAmount);
+        euint64 encryptedPriorityFee = FHE.asEuint64(params.inputEncryptedPriorityFee);
         
         // Verify nonce
         if (params.priorityFlag) {
@@ -712,19 +712,19 @@ contract EVVMCore is EthereumConfig, Ownable {
     /// @notice Adds encrypted tokens to a user's balance (Treasury only)
     /// @param user User address
     /// @param token Token address
-    /// @param inputEncryptedAmount Encrypted amount to add (externalEuint64)
-    /// @param inputProof Proof for encrypted amount
+    /// @param inputEncryptedAmount Encrypted amount to add (InEuint64)
+    /// @dev CoFHE handles proof verification internally
     function addAmountToUser(
         address user,
         address token,
-        externalEuint64 inputEncryptedAmount,
-        bytes calldata inputProof
+        InEuint64 memory inputEncryptedAmount
     ) external {
         require(msg.sender == treasuryAddress, "Not treasury");
         
-        euint64 encryptedAmount = FHE.fromExternal(inputEncryptedAmount, inputProof);
+        euint64 encryptedAmount = FHE.asEuint64(inputEncryptedAmount);
         balances[user][token] = FHE.add(balances[user][token], encryptedAmount);
         
+        // Always update permissions after modifying encrypted values (CoFHE best practice)
         FHE.allowThis(balances[user][token]);
         FHE.allow(balances[user][token], user);
         
@@ -734,19 +734,19 @@ contract EVVMCore is EthereumConfig, Ownable {
     /// @notice Removes encrypted tokens from a user's balance (Treasury only)
     /// @param user User address
     /// @param token Token address
-    /// @param inputEncryptedAmount Encrypted amount to remove (externalEuint64)
-    /// @param inputProof Proof for encrypted amount
+    /// @param inputEncryptedAmount Encrypted amount to remove (InEuint64)
+    /// @dev CoFHE handles proof verification internally
     function removeAmountFromUser(
         address user,
         address token,
-        externalEuint64 inputEncryptedAmount,
-        bytes calldata inputProof
+        InEuint64 memory inputEncryptedAmount
     ) external {
         require(msg.sender == treasuryAddress, "Not treasury");
         
-        euint64 encryptedAmount = FHE.fromExternal(inputEncryptedAmount, inputProof);
+        euint64 encryptedAmount = FHE.asEuint64(inputEncryptedAmount);
         balances[user][token] = FHE.sub(balances[user][token], encryptedAmount);
         
+        // Always update permissions after modifying encrypted values (CoFHE best practice)
         FHE.allowThis(balances[user][token]);
         FHE.allow(balances[user][token], user);
         

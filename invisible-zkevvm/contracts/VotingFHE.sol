@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.25;
 
-import {FHE, euint32, ebool, externalEuint32} from "@fhevm/solidity/lib/FHE.sol";
-import {EthereumConfig} from "@fhevm/solidity/config/ZamaConfig.sol";
+import {FHE, euint8, euint32, ebool, InEuint8} from "@fhenixprotocol/cofhe-contracts/FHE.sol";
 
-/// @title Encrypted Voting Contract using Zama FHEVM
+/// @title Encrypted Voting Contract using Fhenix CoFHE
 /// @notice Allows creating proposals and casting encrypted votes
 /// @dev All vote tallies are encrypted using FHE
-contract VotingFHE is EthereumConfig {
+/// @dev Follows CoFHE best practices: constant-time computation, encrypted constants, proper access control
+contract VotingFHE {
     struct Proposal {
         string question;
         string[] options;
@@ -19,8 +19,18 @@ contract VotingFHE is EthereumConfig {
     mapping(bytes32 => Proposal) private _proposals;
     mapping(bytes32 => mapping(address => bool)) public hasVoted;
 
+    // Encrypted constants for gas optimization (CoFHE best practice)
+    euint32 private EUINT32_ZERO;
+    euint32 private EUINT32_ONE;
+
     event ProposalCreated(bytes32 id, string question);
     event EncryptedVote(bytes32 id, address voter);
+
+    constructor() {
+        // Initialize encrypted constants once in constructor to save gas
+        EUINT32_ZERO = FHE.asEuint32(0);
+        EUINT32_ONE = FHE.asEuint32(1);
+    }
 
     /// @notice Creates a new voting proposal
     /// @param id Unique identifier for the proposal
@@ -39,48 +49,49 @@ contract VotingFHE is EthereumConfig {
             p.options[i] = options[i];
         }
 
-        // Initialize tallies to encrypted 0
+        // Initialize tallies to encrypted 0 (using pre-encrypted constant)
         for (uint256 i = 0; i < optionsLength; i++) {
-            p.tally[i] = FHE.asEuint32(0);
+            p.tally[i] = EUINT32_ZERO;
         }
         emit ProposalCreated(id, question);
     }
 
     /// @notice Casts an encrypted vote for a proposal
     /// @param id The proposal identifier
-    /// @param inputEuint32 The encrypted choice (option index as uint32)
-    /// @param inputProof The input proof for the encrypted value
+    /// @param optionIndex The encrypted choice (option index as InEuint8)
     /// @dev The vote is encrypted and added to the corresponding option's tally
+    /// @dev Uses constant-time computation to prevent information leakage
     function castEncryptedVote(
         bytes32 id,
-        externalEuint32 inputEuint32,
-        bytes calldata inputProof
+        InEuint8 memory optionIndex
     ) external {
         Proposal storage p = _proposals[id];
         require(p.exists, "no-proposal");
         require(!hasVoted[id][msg.sender], "already");
 
-        // Convert external encrypted input to internal euint32
-        euint32 choice = FHE.fromExternal(inputEuint32, inputProof);
+        // Convert encrypted input to internal euint8
+        euint8 choice = FHE.asEuint8(optionIndex);
 
-        // Increment tally[choice] += 1 (all encrypted)
-        // Use encrypted demux: build encrypted selectors and add 1 where appropriate
+        // Constant-time computation: update all tallies, but only increment the selected one
+        // This prevents information leakage about which option was chosen
         uint256 n = p.options.length;
-        euint32 one = FHE.asEuint32(1);
         
         for (uint256 i = 0; i < n; i++) {
             // Selector: (choice == i) ? 1 : 0 (all encrypted)
-            // FHE.eq returns ebool, use FHE.select to convert to euint32
-            ebool isEqual = FHE.eq(choice, FHE.asEuint32(uint32(i)));
-            euint32 isIdx = FHE.select(isEqual, FHE.asEuint32(1), FHE.asEuint32(0));
-            euint32 incr = FHE.mul(isIdx, one);
-            p.tally[i] = FHE.add(p.tally[i], incr);
+            // Use FHE.select instead of if/else (CoFHE best practice)
+            ebool isEqual = FHE.eq(choice, FHE.asEuint8(uint8(i)));
+            euint32 increment = FHE.select(isEqual, EUINT32_ONE, EUINT32_ZERO);
             
-            // Allow the contract and voter to decrypt the updated tally
+            // Add increment to tally (always executes, but increment is 0 or 1)
+            p.tally[i] = FHE.add(p.tally[i], increment);
+            
+            // Always update permissions after modifying encrypted values (CoFHE best practice)
             FHE.allowThis(p.tally[i]);
-            FHE.allow(p.tally[i], msg.sender);
         }
 
+        // Allow sender to decrypt their choice (for event emission)
+        FHE.allowSender(choice);
+        
         hasVoted[id][msg.sender] = true;
         emit EncryptedVote(id, msg.sender);
     }
@@ -130,5 +141,51 @@ contract VotingFHE is EthereumConfig {
         }
         
         return (tallies, p.options);
+    }
+
+    /// @notice Finalizes voting by decrypting all tallies
+    /// @param id The proposal identifier
+    /// @dev Only authorized parties can decrypt. Use FHE.decrypt() to request decryption
+    function finalizeVote(bytes32 id) external {
+        Proposal storage p = _proposals[id];
+        require(p.exists, "no-proposal");
+
+        uint256 n = p.options.length;
+        for (uint256 i = 0; i < n; i++) {
+            // Request decryption for each tally
+            FHE.decrypt(p.tally[i]);
+        }
+    }
+
+    /// @notice Gets proposal with decrypted results
+    /// @param id The proposal identifier
+    /// @return question The proposal question
+    /// @return options Array of voting options
+    /// @return votes Array of decrypted vote counts (0 if not yet decrypted)
+    /// @return finalized Whether all votes have been decrypted
+    /// @dev Uses FHE.getDecryptResultSafe to safely check decryption status
+    function getProposalWithResults(bytes32 id) external view returns (
+        string memory question,
+        string[] memory options,
+        uint32[] memory votes,
+        bool finalized
+    ) {
+        Proposal storage p = _proposals[id];
+        require(p.exists, "no-proposal");
+
+        question = p.question;
+        uint256 n = p.options.length;
+        options = new string[](n);
+        votes = new uint32[](n);
+        finalized = true;
+
+        for (uint256 i = 0; i < n; i++) {
+            options[i] = p.options[i];
+            
+            // Safely get decryption result
+            (uint256 result, bool decrypted) = FHE.getDecryptResultSafe(p.tally[i]);
+            votes[i] = decrypted ? uint32(result) : 0;
+            if (!decrypted) finalized = false;
+        }
     }
 }

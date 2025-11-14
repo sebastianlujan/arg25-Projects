@@ -1,5 +1,6 @@
 require("@nomicfoundation/hardhat-toolbox");
-require("@fhevm/hardhat-plugin");
+// Plugin Fhenix CoFHE
+require("cofhe-hardhat-plugin");
 
 // Cargar variables de entorno si dotenv está disponible
 try {
@@ -11,25 +12,35 @@ try {
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
   solidity: {
-    version: "0.8.24",
+    version: "0.8.25",
     settings: {
       optimizer: {
         enabled: true,
         runs: 200,
       },
+      viaIR: true, // Required to fix "Stack too deep" errors
     },
   },
   networks: {
-    hardhat: {
-      chainId: 31337, // Required by FHEVM plugin
+    // Red local de CoFHE
+    localcofhe: {
+      url: process.env.LOCAL_COFHE_RPC_URL || "http://localhost:8545",
+      chainId: 9000,
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
     },
-    // Arbitrum Sepolia (testnet)
-    arbitrumSepolia: {
-      url: process.env.ARBITRUM_SEPOLIA_RPC_URL || "https://sepolia-rollup.arbitrum.io/rpc",
+    // Arbitrum Sepolia con CoFHE
+    "arb-sepolia": {
+      url: process.env.ARB_SEPOLIA_RPC_URL || process.env.ARBITRUM_SEPOLIA_RPC_URL || "https://sepolia-rollup.arbitrum.io/rpc",
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
       chainId: 421614,
     },
-    // Arbitrum One (mainnet)
+    // Ethereum Sepolia con CoFHE
+    "eth-sepolia": {
+      url: process.env.ETH_SEPOLIA_RPC_URL || "https://rpc.sepolia.org",
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      chainId: 11155111,
+    },
+    // Arbitrum One (mainnet) - mantener para compatibilidad
     arbitrumOne: {
       url: process.env.ARBITRUM_ONE_RPC_URL || "https://arb1.arbitrum.io/rpc",
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
@@ -41,11 +52,6 @@ module.exports = {
     tests: "./test",
     cache: "./cache",
     artifacts: "./artifacts",
-  },
-  // Configuración de FHEVM (Zama)
-  fhevm: {
-    // Configuración automática para redes compatibles con FHEVM
-    // Sepolia testnet es compatible con FHEVM
   },
 };
 

@@ -1,20 +1,20 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.25;
 
-import {FHE, euint256, euint64, ebool, externalEuint256, externalEuint64, externalEbool} from "@fhevm/solidity/lib/FHE.sol";
-import {EthereumConfig} from "@fhevm/solidity/config/ZamaConfig.sol";
+import {FHE, euint256, euint64, ebool, InEuint64, InEuint256, InEbool} from "@fhenixprotocol/cofhe-contracts/FHE.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /// @title Staking Manager with FHE
-/// @notice Manages encrypted staking with private amounts
+/// @notice Manages encrypted staking with private amounts using Fhenix CoFHE
 /// @dev IMPORTANT: This contract expects encrypted inputs from external sources.
 ///     Required encrypted inputs:
-///     - Amount to stake: externalEuint64
-///     - Owner address: externalEuint256
-///     - Active status: externalEbool
+///     - Amount to stake: InEuint64
+///     - Owner address: InEuint256
+///     - Active status: InEbool
 ///     See STAKING_ENCRYPTED_INPUTS.md for details.
-contract StakingManager is EthereumConfig, Ownable {
+/// @dev Follows CoFHE best practices: encrypted constants, proper access control
+contract StakingManager is Ownable {
     // ============ Structs ============
     
     struct Stake {
@@ -42,6 +42,10 @@ contract StakingManager is EthereumConfig, Ownable {
     uint256 private nextStakeId;
     uint256 private constant BLOCKS_PER_YEAR = 2_102_400; // ~12 seconds per block
 
+    // Encrypted constants for gas optimization (CoFHE best practice)
+    euint64 private EUINT64_ZERO;
+    ebool private EBOOL_FALSE;
+
     // ============ Events ============
     
     event Staked(address indexed user, uint256 indexed stakeId, uint256 lockTimestamp);
@@ -56,39 +60,36 @@ contract StakingManager is EthereumConfig, Ownable {
         pool.apr = _apr;
         pool.minLockPeriod = _minLockPeriod;
         pool.lastRewardBlock = block.number;
-        pool.rewardPerShare = FHE.asEuint64(0);
-        pool.totalStaked = FHE.asEuint64(0);
+        
+        // Initialize encrypted constants once in constructor to save gas (CoFHE best practice)
+        EUINT64_ZERO = FHE.asEuint64(0);
+        EBOOL_FALSE = FHE.asEbool(false);
+        
+        pool.rewardPerShare = EUINT64_ZERO;
+        pool.totalStaked = EUINT64_ZERO;
     }
 
     // ============ Staking Functions ============
     
     /// @notice Stake tokens with encrypted amount and owner address
-    /// @param inputEncryptedAmount Encrypted amount to stake (externalEuint64)
-    /// @param inputAmountProof Proof for encrypted amount
-    /// @param inputEncryptedOwner Encrypted owner address (externalEuint256)
-    /// @param inputOwnerProof Proof for encrypted owner address
+    /// @param inputEncryptedAmount Encrypted amount to stake (InEuint64)
+    /// @param inputEncryptedOwner Encrypted owner address (InEuint256)
     /// @param lockPeriod Lock period in seconds (public)
-    /// @param inputEncryptedIsActive Optional: encrypted initial active status (externalEbool)
-    /// @param inputActiveProof Optional: proof for encrypted active status
+    /// @param inputEncryptedIsActive Optional: encrypted initial active status (InEbool)
+    /// @dev CoFHE handles proof verification internally
     /// @return stakeId The ID of the created stake
     function stake(
-        externalEuint64 inputEncryptedAmount,
-        bytes calldata inputAmountProof,
-        externalEuint256 inputEncryptedOwner,
-        bytes calldata inputOwnerProof,
+        InEuint64 memory inputEncryptedAmount,
+        InEuint256 memory inputEncryptedOwner,
         uint256 lockPeriod,
-        externalEbool inputEncryptedIsActive,
-        bytes calldata inputActiveProof
+        InEbool memory inputEncryptedIsActive
     ) external returns (uint256 stakeId) {
         require(lockPeriod >= pool.minLockPeriod, "Lock period too short");
         
-        // Convert external encrypted inputs
-        // IMPORTANT: Types must match: externalEuint64 → euint64 (use add64() in SDK)
-        euint64 encryptedAmount = FHE.fromExternal(inputEncryptedAmount, inputAmountProof);
-        // IMPORTANT: Types must match: externalEuint256 → euint256 (use add256() in SDK)
-        euint256 encryptedOwner = FHE.fromExternal(inputEncryptedOwner, inputOwnerProof);
-        // IMPORTANT: Types must match: externalEbool → ebool (use addBool() in SDK)
-        ebool encryptedIsActive = FHE.fromExternal(inputEncryptedIsActive, inputActiveProof);
+        // Convert encrypted inputs (CoFHE handles proof verification internally)
+        euint64 encryptedAmount = FHE.asEuint64(inputEncryptedAmount);
+        euint256 encryptedOwner = FHE.asEuint256(inputEncryptedOwner);
+        ebool encryptedIsActive = FHE.asEbool(inputEncryptedIsActive);
         
         // Update rewards before staking
         _updateRewards();
@@ -114,13 +115,15 @@ contract StakingManager is EthereumConfig, Ownable {
         // Track user stake (public mapping for convenience/ownership verification)
         userStakes[msg.sender].push(stakeId);
         
-        // Allow user to decrypt their stake
+        // Always update permissions after modifying encrypted values (CoFHE best practice)
         FHE.allowThis(newStake.amount);
-        FHE.allow(newStake.amount, msg.sender);
+        FHE.allowSender(newStake.amount);
         FHE.allowThis(newStake.rewardDebt);
-        FHE.allow(newStake.rewardDebt, msg.sender);
+        FHE.allowSender(newStake.rewardDebt);
         FHE.allowThis(newStake.isActive);
-        FHE.allow(newStake.isActive, msg.sender);
+        FHE.allowSender(newStake.isActive);
+        FHE.allowThis(stakeOwner[stakeId]);
+        FHE.allowSender(stakeOwner[stakeId]);
         
         emit Staked(msg.sender, stakeId, newStake.lockTimestamp);
         return stakeId;
@@ -148,25 +151,27 @@ contract StakingManager is EthereumConfig, Ownable {
         // Note: Full division by totalStaked handled in claimRewards calculation
         pool.rewardPerShare = FHE.add(pool.rewardPerShare, reward);
         
+        // Always update permissions after modifying encrypted values (CoFHE best practice)
+        FHE.allowThis(pool.rewardPerShare);
+        FHE.allowThis(pool.totalStaked);
+        
         pool.lastRewardBlock = block.number;
     }
 
     /// @notice Unstake tokens after lock period
     /// @param stakeId The stake ID to unstake
-    /// @param inputEncryptedOwner Encrypted owner address for verification (externalEuint256)
-    /// @param inputOwnerProof Proof for encrypted owner address
+    /// @param inputEncryptedOwner Encrypted owner address for verification (InEuint256)
+    /// @dev CoFHE handles proof verification internally
     /// @return unstakedAmount The encrypted amount unstaked
     function unstake(
         uint256 stakeId,
-        externalEuint256 inputEncryptedOwner,
-        bytes calldata inputOwnerProof
+        InEuint256 memory inputEncryptedOwner
     ) external returns (euint64 unstakedAmount) {
         Stake storage s = stakes[stakeId];
         require(block.timestamp >= s.lockTimestamp, "Still locked");
         
         // Verify stake ownership using encrypted address comparison
-        // IMPORTANT: externalEuint256 → euint256 (use add256() in SDK for address)
-        euint256 callerEncrypted = FHE.fromExternal(inputEncryptedOwner, inputOwnerProof);
+        euint256 callerEncrypted = FHE.asEuint256(inputEncryptedOwner);
         euint256 ownerEncrypted = stakeOwner[stakeId];
         ebool isOwner = FHE.eq(callerEncrypted, ownerEncrypted);
         // Note: Ownership verification requires external decryption of isOwner
@@ -182,30 +187,33 @@ contract StakingManager is EthereumConfig, Ownable {
         require(isOwnerPublic, "Not owner");
         
         unstakedAmount = s.amount;
-        s.isActive = FHE.asEbool(false);
+        s.isActive = EBOOL_FALSE; // Use pre-encrypted constant
         
         // Update pool total
         pool.totalStaked = FHE.sub(pool.totalStaked, unstakedAmount);
+        
+        // Always update permissions after modifying encrypted values (CoFHE best practice)
+        FHE.allowThis(s.isActive);
+        FHE.allowThis(pool.totalStaked);
+        FHE.allowSender(unstakedAmount);
         
         emit Unstaked(msg.sender, stakeId);
     }
 
     /// @notice Claim rewards for a stake
     /// @param stakeId The stake ID to claim rewards for
-    /// @param inputEncryptedOwner Encrypted owner address for verification (externalEuint256)
-    /// @param inputOwnerProof Proof for encrypted owner address
+    /// @param inputEncryptedOwner Encrypted owner address for verification (InEuint256)
+    /// @dev CoFHE handles proof verification internally
     /// @return rewardAmount The encrypted reward amount
     function claimRewards(
         uint256 stakeId,
-        externalEuint256 inputEncryptedOwner,
-        bytes calldata inputOwnerProof
+        InEuint256 memory inputEncryptedOwner
     ) external returns (euint64 rewardAmount) {
         _updateRewards();
         Stake storage s = stakes[stakeId];
         
         // Verify stake ownership using encrypted address comparison
-        // IMPORTANT: externalEuint256 → euint256 (use add256() in SDK for address)
-        euint256 callerEncrypted = FHE.fromExternal(inputEncryptedOwner, inputOwnerProof);
+        euint256 callerEncrypted = FHE.asEuint256(inputEncryptedOwner);
         euint256 ownerEncrypted = stakeOwner[stakeId];
         ebool isOwner = FHE.eq(callerEncrypted, ownerEncrypted);
         // Note: Ownership verification requires external decryption of isOwner
@@ -226,6 +234,10 @@ contract StakingManager is EthereumConfig, Ownable {
         
         // Update reward debt to current accumulated reward
         s.rewardDebt = accumulatedReward;
+        
+        // Always update permissions after modifying encrypted values (CoFHE best practice)
+        FHE.allowThis(s.rewardDebt);
+        FHE.allowSender(rewardAmount);
         
         emit RewardsClaimed(msg.sender, stakeId);
     }
