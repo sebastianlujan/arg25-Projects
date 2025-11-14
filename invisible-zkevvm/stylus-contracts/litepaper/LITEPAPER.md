@@ -29,11 +29,11 @@ EVVM is a **virtual blockchain** that runs inside Arbitrum, eliminating servers 
 - **Fast & Cheap**: 90% cost reduction via Arbitrum Stylus
 - **Mathematically Secure**: Zero-knowledge proofs for verification
 
-> **The Vision:** A network where payments and stakes remain completely private, with near-zero costs to users. Achieved by integrating Zama's homomorphic encryption, Arbitrum's Stylus interface, and the zkFisher relayer.
+> **The Vision:** A network where payments and stakes remain completely private, with near-zero costs to users. Achieved by integrating Fhenix coFHE (Confidential FHE coprocessor), Arbitrum's Stylus interface, and the zkFisher relayer.
 
 ### Core Technologies
 
-- **Zama FHE**: Fully Homomorphic Encryption for private computation
+- **Fhenix coFHE**: FHE-enabled coprocessor allowing computation on encrypted data with asynchronous processing
 - **Arbitrum Stylus**: High-performance Rust smart contracts
 - **zkFisher**: Decentralized relayer with zk-proof validation
 - **Solidity Core**: Treasury, payments, and staking management

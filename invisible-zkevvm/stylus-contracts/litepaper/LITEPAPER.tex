@@ -174,13 +174,13 @@ EVVM is a \textbf{virtual blockchain} that runs inside Arbitrum, eliminating ser
 \end{itemize}
 
 \begin{keypoint}
-\textbf{The Vision:} A network where payments and stakes remain completely private, with near-zero costs to users. Achieved by integrating Zama's FHE encryption, Arbitrum's Stylus interface, and the zkFisher relayer.
+\textbf{The Vision:} A network where payments and stakes remain completely private, with near-zero costs to users. Achieved by integrating Fhenix's FHE encryption, Arbitrum's Stylus interface, and the zkFisher relayer.
 \end{keypoint}
 
 \subsection*{Core Technologies}
 
 \begin{itemize}[leftmargin=*]
-    \item \textbf{Zama FHE}: Fully Homomorphic Encryption for private computation
+    \item \textbf{Fhenix FHE}: Fully Homomorphic Encryption for private computation
     \item \textbf{Arbitrum Stylus}: High-performance Rust smart contracts
     \item \textbf{zkFisher}: Decentralized relayer with zk-proof validation
     \item \textbf{Solidity Core}: Treasury, payments, and staking management
@@ -261,7 +261,7 @@ The foundation layer handling critical functions:
     \item \textbf{Payments}: Encrypted balance transfers
     \item \textbf{Staking}: Private staking mechanisms
     \item \textbf{Treasury}: Fund management and distribution
-    \item \textbf{FHE Integration}: Zama precompile calls
+    \item \textbf{FHE Integration}: Fhenix precompile calls
 \end{itemize}
 
 \begin{highlight}
@@ -289,12 +289,12 @@ The relayer's workflow follows a sophisticated multi-step process. First, it lis
 \textbf{Gasless Design:} The relayer and treasury infrastructure cover all gas costs, enabling completely free transactions for end users. This gasless architecture removes economic barriers to privacy-preserving blockchain interactions.
 \end{keypoint}
 
-\subsubsection{4. Zama Connection}
+\subsubsection{4. Fhenix Connection}
 
-Integration with Zama's FHE infrastructure:
+Integration with Fhenix's FHE infrastructure:
 
 \begin{itemize}[leftmargin=*]
-    \item Contracts call Zama precompiles
+    \item Contracts call Fhenix precompiles
     \item Encrypted operations processed off-chain
     \item Decentralized computation network
     \item Results verified and committed on-chain
@@ -320,7 +320,7 @@ The EVVM architecture can be visualized at two levels of abstraction:
 
 \subsection{Transaction Flow}
 
-The EVVM transaction flow creates a seamless bridge between encrypted operations and on-chain verification. We connect the core contracts deployed on Arbitrum (including Staking, Payments, and Treasury) using Zama's Fully Homomorphic Encryption (FHE), with Stylus serving as the high-performance interface layer. The zkFisher relayer acts as the central coordinator, listening to pending transactions and extracting their transaction data.
+The EVVM transaction flow creates a seamless bridge between encrypted operations and on-chain verification. We connect the core contracts deployed on Arbitrum (including Staking, Payments, and Treasury) using Fhenix's Fully Homomorphic Encryption (FHE), with Stylus serving as the high-performance interface layer. The zkFisher relayer acts as the central coordinator, listening to pending transactions and extracting their transaction data.
 
 When a user initiates a transaction, EVVM proposes a \textbf{healthy block}, an initially empty block structure ready to be populated with encrypted transactions. The zkFisher relayer continuously monitors for these healthy blocks and begins the batching process. As transactions arrive, zkFisher stores the transaction block header metadata in a Merkle tree structure managed by AZTEC. For this Merkle tree, zkFisher generates a \textbf{Merkle inclusion proof}, demonstrating that each transaction is properly included in the block. The root of this Merkle tree is called a \textbf{snapshot}, a cryptographic commitment to the state of all transactions at a specific point in time.
 
@@ -362,7 +362,7 @@ For this verification process, we require an \textbf{Arbitrum Noir verifier}. Th
 \subsection{Security \& Upgradeability}
 
 \begin{itemize}[leftmargin=*]
-    \item \textbf{Audited Code}: Zama's FHE implementation is battle-tested
+    \item \textbf{Audited Code}: Fhenix's FHE implementation is battle-tested
     \item \textbf{Merkle inclussion Proofs}: Snapshots for every epoch
     \item \textbf{Modular Design}: Easy upgrades without breaking changes
     \item \textbf{Arbitrum Security}: Inherits L2 security guarantees
@@ -482,7 +482,7 @@ Full Mainnet & Q2 2026 & Planned \\
     \item \textcolor{accentgreen}{\textbf{\ding{51}}} Core contracts deployed on Arbitrum Sepolia
     \item \textcolor{accentgreen}{\textbf{\ding{51}}} Stylus interface implemented and tested
     \item \textcolor{accentgreen}{\textbf{\ding{51}}} zkFisher relayer operational
-    \item \textcolor{accentgreen}{\textbf{\ding{51}}} Zama FHE integration complete
+    \item \textcolor{accentgreen}{\textbf{\ding{51}}} Fhenix FHE integration complete
     \item \textcolor{accentgreen}{\textbf{\ding{51}}} EVVMCafhe demo application live
 \end{itemize}
 
@@ -539,7 +539,7 @@ Base Layer & Arbitrum One (Mainnet) / Sepolia (Testnet) \\
 Block Time & $\sim$2-5 seconds \\
 Finality & 15 minutes (L1 finality) \\
 TPS Capacity & 4,000+ (Arbitrum limit) \\
-Encryption & Zama FHE (TFHE) \\
+Encryption & Fhenix FHE (TFHE) \\
 Proof System & Merkle inclusion proof (Aztec-noir) \\
 Smart Contract Lang & Solidity + Rust (Stylus) \\
 \bottomrule
@@ -552,7 +552,7 @@ Smart Contract Lang & Solidity + Rust (Stylus) \\
     \item \textbf{EVVMCore.sol}: Main Solidity contract for payments, staking, treasury
     \item \textbf{Stylus Interface}: Rust layer for efficient encrypted operations
     \item \textbf{zkFisher}: Off-chain relayer with proof generation
-    \item \textbf{Zama Precompiles}: FHE operation handlers
+    \item \textbf{Fhenix Precompiles}: FHE operation handlers
 \end{itemize}
 
 
