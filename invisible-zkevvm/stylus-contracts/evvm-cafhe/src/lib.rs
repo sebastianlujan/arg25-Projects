@@ -12,7 +12,7 @@
 //!
 //! ## Architecture
 //! ```text
-//! User → EVVMCafhe (Stylus) → EVVMCore → FHEVM Precompiles → Coprocessor
+//! User → EVVMCafhe (Stylus) → EVVMCore → CoFHE TaskManager → Coprocessor
 //! ```
 
 #![cfg_attr(not(feature = "std"), no_std)]
@@ -32,6 +32,7 @@ use stylus_sdk::contract;
 // Import FHE middleware
 use fhe_stylus::prelude::*;
 use fhe_stylus::interfaces::IEVVMCore;
+use fhe_stylus::cofhe_interfaces::{InEuint64, Utils};
 
 // Unit tests - only compile for WASM target
 #[cfg(all(test, target_arch = "wasm32"))]
@@ -113,13 +114,11 @@ impl EVVMCafhe {
     /// * `coffee_type` - Type/name of coffee being ordered (e.g., "Espresso", "Latte")
     /// * `quantity` - Number of coffee units being ordered
     /// * `total_price_plaintext` - Total price in plaintext (for signature verification)
-    /// * `input_encrypted_total_price` - Encrypted total price to be paid in ETH
-    /// * `input_price_proof` - Proof for encrypted total price
+    /// * `input_encrypted_total_price` - Encrypted total price to be paid in ETH (InEuint64 with proof included)
     /// * `nonce` - Unique number to prevent replay attacks (must not be reused)
     /// * `signature` - Client's signature authorizing the coffee order
     /// * `priority_fee_plaintext` - Priority fee in plaintext
-    /// * `input_encrypted_priority_fee` - Encrypted priority fee for EVVM transaction
-    /// * `input_fee_proof` - Proof for encrypted priority fee
+    /// * `input_encrypted_priority_fee` - Encrypted priority fee for EVVM transaction (InEuint64 with proof included)
     /// * `nonce_evvm` - Unique nonce for the EVVM payment transaction
     /// * `priority_flag_evvm` - Boolean flag indicating the type of nonce
     ///
@@ -137,13 +136,11 @@ impl EVVMCafhe {
         coffee_type: String,
         quantity: U256,
         total_price_plaintext: U256,
-        input_encrypted_total_price: ExternalEuint64,
-        input_price_proof: Vec<u8>,
+        input_encrypted_total_price: InEuint64,
         nonce: U256,
         signature: Vec<u8>,
         priority_fee_plaintext: U256,
-        input_encrypted_priority_fee: ExternalEuint64,
-        input_fee_proof: Vec<u8>,
+        input_encrypted_priority_fee: InEuint64,
         nonce_evvm: U256,
         priority_flag_evvm: bool,
     ) -> Result<(), Vec<u8>> {
@@ -200,11 +197,15 @@ impl EVVMCafhe {
                 String::new(),                                      // toIdentity
                 ETHER_ADDRESS,                                      // token
                 total_price_plaintext,                              // amountPlaintext
-                input_encrypted_total_price,                        // inputEncryptedAmount
-                input_price_proof.into(),                           // inputAmountProof
+                input_encrypted_total_price.ct_hash,                // inputEncryptedAmount_ctHash
+                input_encrypted_total_price.security_zone,          // inputEncryptedAmount_securityZone
+                input_encrypted_total_price.utype,                   // inputEncryptedAmount_utype
+                input_encrypted_total_price.signature.into(),       // inputEncryptedAmount_signature
                 priority_fee_plaintext,                             // priorityFeePlaintext
-                input_encrypted_priority_fee,                       // inputEncryptedPriorityFee
-                input_fee_proof.into(),                             // inputFeeProof
+                input_encrypted_priority_fee.ct_hash,               // inputEncryptedPriorityFee_ctHash
+                input_encrypted_priority_fee.security_zone,        // inputEncryptedPriorityFee_securityZone
+                input_encrypted_priority_fee.utype,                 // inputEncryptedPriorityFee_utype
+                input_encrypted_priority_fee.signature.into(),      // inputEncryptedPriorityFee_signature
                 nonce_evvm,                                         // nonce
                 priority_flag_evvm,                                 // priorityFlag
                 Address::ZERO,                                      // executor
@@ -225,12 +226,10 @@ impl EVVMCafhe {
     ///
     /// # Parameters
     /// * `to` - Address where the withdrawn reward tokens will be sent
-    /// * `input_encrypted_balance` - Encrypted balance to withdraw
-    /// * `input_balance_proof` - Proof for encrypted balance
+    /// * `input_encrypted_balance` - Encrypted balance to withdraw (InEuint64 with proof included)
     /// * `nonce_evvm` - Nonce for the EVVM payment transaction
     /// * `priority_flag_evvm` - Boolean flag for nonce type
-    /// * `input_encrypted_priority_fee` - Encrypted priority fee
-    /// * `input_fee_proof` - Proof for encrypted priority fee
+    /// * `input_encrypted_priority_fee` - Encrypted priority fee (InEuint64 with proof included)
     ///
     /// # Security
     /// Only callable by the coffee shop owner
@@ -238,12 +237,10 @@ impl EVVMCafhe {
     pub fn withdraw_rewards(
         &mut self,
         to: Address,
-        input_encrypted_balance: ExternalEuint64,
-        input_balance_proof: Vec<u8>,
+        input_encrypted_balance: InEuint64,
         nonce_evvm: U256,
         priority_flag_evvm: bool,
-        input_encrypted_priority_fee: ExternalEuint64,
-        input_fee_proof: Vec<u8>,
+        input_encrypted_priority_fee: InEuint64,
     ) -> Result<(), Vec<u8>> {
         // Check authorization
         if msg::sender() != self.owner_of_shop.get() {
@@ -263,11 +260,15 @@ impl EVVMCafhe {
                 String::new(),                                      // toIdentity
                 PRINCIPAL_TOKEN_ADDRESS,                            // token
                 U256::ZERO,                                         // amountPlaintext
-                input_encrypted_balance,                            // inputEncryptedAmount
-                input_balance_proof.into(),                         // inputAmountProof
+                input_encrypted_balance.ct_hash,                    // inputEncryptedAmount_ctHash
+                input_encrypted_balance.security_zone,              // inputEncryptedAmount_securityZone
+                input_encrypted_balance.utype,                      // inputEncryptedAmount_utype
+                input_encrypted_balance.signature.into(),           // inputEncryptedAmount_signature
                 U256::ZERO,                                         // priorityFeePlaintext
-                input_encrypted_priority_fee,                       // inputEncryptedPriorityFee
-                input_fee_proof.into(),                             // inputFeeProof
+                input_encrypted_priority_fee.ct_hash,               // inputEncryptedPriorityFee_ctHash
+                input_encrypted_priority_fee.security_zone,         // inputEncryptedPriorityFee_securityZone
+                input_encrypted_priority_fee.utype,                 // inputEncryptedPriorityFee_utype
+                input_encrypted_priority_fee.signature.into(),      // inputEncryptedPriorityFee_signature
                 nonce_evvm,                                         // nonce
                 priority_flag_evvm,                                 // priorityFlag
                 Address::ZERO,                                      // executor
@@ -282,12 +283,10 @@ impl EVVMCafhe {
     ///
     /// # Parameters
     /// * `to` - Address where the withdrawn ETH will be sent
-    /// * `input_encrypted_balance` - Encrypted balance to withdraw
-    /// * `input_balance_proof` - Proof for encrypted balance
+    /// * `input_encrypted_balance` - Encrypted balance to withdraw (InEuint64 with proof included)
     /// * `nonce_evvm` - Nonce for the EVVM payment transaction
     /// * `priority_flag_evvm` - Boolean flag for nonce type
-    /// * `input_encrypted_priority_fee` - Encrypted priority fee
-    /// * `input_fee_proof` - Proof for encrypted priority fee
+    /// * `input_encrypted_priority_fee` - Encrypted priority fee (InEuint64 with proof included)
     ///
     /// # Security
     /// Only callable by the coffee shop owner
@@ -295,12 +294,10 @@ impl EVVMCafhe {
     pub fn withdraw_funds(
         &mut self,
         to: Address,
-        input_encrypted_balance: ExternalEuint64,
-        input_balance_proof: Vec<u8>,
+        input_encrypted_balance: InEuint64,
         nonce_evvm: U256,
         priority_flag_evvm: bool,
-        input_encrypted_priority_fee: ExternalEuint64,
-        input_fee_proof: Vec<u8>,
+        input_encrypted_priority_fee: InEuint64,
     ) -> Result<(), Vec<u8>> {
         // Check authorization
         if msg::sender() != self.owner_of_shop.get() {
@@ -320,11 +317,15 @@ impl EVVMCafhe {
                 String::new(),                                      // toIdentity
                 ETHER_ADDRESS,                                      // token
                 U256::ZERO,                                         // amountPlaintext
-                input_encrypted_balance,                            // inputEncryptedAmount
-                input_balance_proof.into(),                         // inputAmountProof
+                input_encrypted_balance.ct_hash,                    // inputEncryptedAmount_ctHash
+                input_encrypted_balance.security_zone,              // inputEncryptedAmount_securityZone
+                input_encrypted_balance.utype,                      // inputEncryptedAmount_utype
+                input_encrypted_balance.signature.into(),           // inputEncryptedAmount_signature
                 U256::ZERO,                                         // priorityFeePlaintext
-                input_encrypted_priority_fee,                       // inputEncryptedPriorityFee
-                input_fee_proof.into(),                             // inputFeeProof
+                input_encrypted_priority_fee.ct_hash,               // inputEncryptedPriorityFee_ctHash
+                input_encrypted_priority_fee.security_zone,         // inputEncryptedPriorityFee_securityZone
+                input_encrypted_priority_fee.utype,                 // inputEncryptedPriorityFee_utype
+                input_encrypted_priority_fee.signature.into(),      // inputEncryptedPriorityFee_signature
                 nonce_evvm,                                         // nonce
                 priority_flag_evvm,                                 // priorityFlag
                 Address::ZERO,                                      // executor

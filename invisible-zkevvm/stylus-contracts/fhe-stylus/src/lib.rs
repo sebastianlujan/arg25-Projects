@@ -113,11 +113,21 @@ pub mod interfaces;
 pub mod signature;
 pub mod types;
 
+// CoFHE modules (new)
+pub mod cofhe;
+pub mod cofhe_config;
+pub mod cofhe_interfaces;
+
 // Re-export main types and functions for convenience
 pub use config::{get_config, FHEVMConfig};
 pub use fhe::{FHEError, FHE};
 pub use signature::{SignatureError, SignatureRecover};
 pub use types::{Ebool, Euint256, Euint64, ExternalEuint256, ExternalEuint64};
+
+// CoFHE re-exports
+pub use cofhe::{CoFHE, CoFHEError};
+pub use cofhe_config::{get_cofhe_config, CoFHEConfig};
+pub use cofhe_interfaces::{ITaskManager, InEuint64, InEuint8, InEuint32, InEuint256, InEbool, FunctionId, Utils};
 
 // Re-export commonly used Stylus types
 pub use stylus_sdk::prelude::*;
@@ -132,10 +142,17 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 /// use fhe_stylus::prelude::*;
 /// ```
 pub mod prelude {
+    // ZAMA FHEVM (legacy)
     pub use crate::fhe::{FHEError, FHE};
     pub use crate::types::{Ebool, Euint256, Euint64, ExternalEuint256, ExternalEuint64};
     pub use crate::signature::{SignatureError, SignatureRecover};
     pub use crate::config::get_config;
+    
+    // CoFHE (new)
+    pub use crate::cofhe::{CoFHE, CoFHEError};
+    pub use crate::cofhe_config::{get_cofhe_config, CoFHEConfig};
+    pub use crate::cofhe_interfaces::{ITaskManager, InEuint64, InEuint8, InEuint32, InEuint256, InEbool, FunctionId, Utils};
+    
     pub use stylus_sdk::prelude::*;
 }
 

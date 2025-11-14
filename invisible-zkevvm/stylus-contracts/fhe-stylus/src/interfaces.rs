@@ -330,6 +330,7 @@ sol_interface! {
     ///
     /// Interface for interacting with the EVVMCore contract which handles
     /// encrypted balance management and payments in the EVVM virtual blockchain.
+    /// Uses CoFHE (Fhenix) for encrypted operations.
     interface IEVVMCore {
         /// Process an encrypted payment
         ///
@@ -339,26 +340,38 @@ sol_interface! {
         /// * `toIdentity` - Destination identity string (can be empty)
         /// * `token` - Token address
         /// * `amountPlaintext` - Amount in plaintext (for signature)
-        /// * `inputEncryptedAmount` - Encrypted amount
-        /// * `inputAmountProof` - Proof for amount
+        /// * `inputEncryptedAmount_ctHash` - Encrypted amount ciphertext hash (InEuint64)
+        /// * `inputEncryptedAmount_securityZone` - Security zone for encrypted amount
+        /// * `inputEncryptedAmount_utype` - Type for encrypted amount (EUINT64_TFHE = 5)
+        /// * `inputEncryptedAmount_signature` - Signature/proof for encrypted amount (included in InEuint64)
         /// * `priorityFeePlaintext` - Priority fee in plaintext
-        /// * `inputEncryptedPriorityFee` - Encrypted priority fee
-        /// * `inputFeeProof` - Proof for fee
+        /// * `inputEncryptedPriorityFee_ctHash` - Encrypted priority fee ciphertext hash (InEuint64)
+        /// * `inputEncryptedPriorityFee_securityZone` - Security zone for encrypted priority fee
+        /// * `inputEncryptedPriorityFee_utype` - Type for encrypted priority fee (EUINT64_TFHE = 5)
+        /// * `inputEncryptedPriorityFee_signature` - Signature/proof for encrypted priority fee (included in InEuint64)
         /// * `nonce` - Transaction nonce
         /// * `priorityFlag` - Priority flag
         /// * `executor` - Executor address
         /// * `signature` - Signature bytes
+        ///
+        /// # Note
+        /// In Solidity, this uses `PaymentParams` struct with `InEuint64` types.
+        /// Since `sol_interface!` doesn't support structs directly, we use flattened parameters.
         function pay(
             address from,
             address to,
             string toIdentity,
             address token,
             uint256 amountPlaintext,
-            bytes32 inputEncryptedAmount,
-            bytes inputAmountProof,
+            uint256 inputEncryptedAmount_ctHash,
+            uint8 inputEncryptedAmount_securityZone,
+            uint8 inputEncryptedAmount_utype,
+            bytes calldata inputEncryptedAmount_signature,
             uint256 priorityFeePlaintext,
-            bytes32 inputEncryptedPriorityFee,
-            bytes inputFeeProof,
+            uint256 inputEncryptedPriorityFee_ctHash,
+            uint8 inputEncryptedPriorityFee_securityZone,
+            uint8 inputEncryptedPriorityFee_utype,
+            bytes calldata inputEncryptedPriorityFee_signature,
             uint256 nonce,
             bool priorityFlag,
             address executor,

@@ -31,6 +31,16 @@ pub type Euint256 = FixedBytes<32>;
 /// External encrypted 256-bit unsigned integer
 pub type ExternalEuint256 = FixedBytes<32>;
 
+/// Encrypted 8-bit unsigned integer
+///
+/// Equivalent to Solidity's `euint8` type.
+pub type Euint8 = FixedBytes<32>;
+
+/// Encrypted 32-bit unsigned integer
+///
+/// Equivalent to Solidity's `euint32` type.
+pub type Euint32 = FixedBytes<32>;
+
 // Since these are just type aliases for FixedBytes<32>, they automatically
 // inherit all the necessary implementations including:
 // - AbiType, AbiEncode, AbiDecode (for contract ABI)
