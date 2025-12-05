@@ -1,84 +1,74 @@
-# 🌿 Invisible Garden — ARG25 Projects
+# ARG25 Project Submission Template
 
-Welcome to **Invisible Garden-ARG25**.  
-This repository hosts all project submissions for the ARG25 edition.
+Welcome to Invisible Garden- ARG25.
 
-Each participant (or team) documents their project journey here, updating their progress **weekly** through a single, evolving Pull Request (PR).
-
-
-## Program Overview
-
-**Duration:** 3 Weeks  
-**Timeline:**
-- **Week 1:** ends **October 31**
-- **Week 2:** ends **November 7**
-- **Week 3:** ends **November 14**
-
-Each week, participants update their project README with progress and goals, culminating in a final wrap-up at the end of Week 3.
+Each participant or team will maintain this README throughout the program.  
+You’ll update your progress weekly **in the same PR**, so mentors and reviewers can track your journey end-to-end.
 
 
 
+##  Project Title
+_A short, descriptive name of your project._
 
-##  Weekly Progress Workflow
+## Team
+- Team/Individual Name:
+- GitHub Handles:
+- Devfolio Handles: 
 
-1. **Fork** this repository to your account.
-2. Create a branch named after your project:
-
-   `git checkout -b teamname-projectname`
-
-3. Add your folder with the `project-name/`.
-- Add a `README.md` using the `README_template.md` provided.
-- Optionally create an `assets/` folder for diagrams, screenshots, or code snippets.
-4. Commit your README (based on the template) and push to your fork.
-5. **Raise a PR** to the main repo and keep updating the same PR each week – update your branch with weekly commits.
-
-##  Folder Structure
-
-```
-arg25-projects/
-|
-├── README.md # You are here (program overview)
-├── README_template.md # Base template for your project README
-|
-├── your-project/
-|   |   ├── README.md # Your project progress log
-|   |   └── assets/ # (optional) diagrams, screenshots, etc.
-|   └── ...
-|
-└── 
-```
+## Project Description
+_What are you building and why does it matter? Explain the core problem and your proposed solution._
 
 
 
-## 🗓️ Weekly Update Schedule
-
-| Week | Dates | Deliverable |
-|-------|--------|--------------|
-| Week 1 | Oct 24 → Oct 31 | Initial setup & first progress update |
-| Week 2 | Nov 1 → Nov 7 | Mid-program update |
-| Week 3 | Nov 8 → Nov 14 | Final deliverable & wrap-up |
+## Tech Stack
+_List all the technologies, frameworks, and tools you are using._
 
 
 
-## Submission Guidelines
-
-- Maintain **a single PR** through the entire program.
-- Commit your weekly progress by **Friday EOD** of each week.
-- Ensure your README always includes:
-  - Project overview & goals
-  - Weekly progress summaries
-  - Updated links to repos, demos, or presentations
-
-
-## Community & Support
-
-Join the Invisible Garden community for feedback and updates:
-- Website: [https://invisible.garden](https://invisible.garden)
-- Twitter: [@invisiblgarden](https://twitter.com/invisiblgarden)
+## Objectives
+_What are the specific outcomes you aim to achieve by the end of ARG25?_
 
 
 
+## Weekly Progress
+
+### Week 1 (ends Oct 31)
+**Goals:**
+
+**Progress Summary:**  
 
 
-Happy Building 🌿  
-**– The Invisible Garden Team**
+### Week 2 (ends Nov 7)
+**Goals:**  
+ 
+**Progress Summary:**  
+
+
+### 🗓️ Week 3 (ends Nov 14)
+**Goals:**  
+
+**Progress Summary:**  
+
+
+
+## Final Wrap-Up
+_After Week 3, summarize your final state: deliverables, repo links, and outcomes._
+
+- **Main Repository Link:**  
+- **Demo / Deployment Link (if any):**  
+- **Slides / Presentation (if any):**
+
+
+
+## 🧾 Learnings
+_What did you learn or improve during ARG25?_
+
+
+
+## Next Steps
+_If you plan to continue development beyond ARG25, what’s next?_
+
+
+
+_This template is part of the [ARG25 Projects Repository](https://github.com/invisible-garden/arg25-projects)._  
+_Update this file weekly by committing and pushing to your fork, then raising a PR at the end of each week._
