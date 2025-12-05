@@ -1,0 +1,592 @@
+\documentclass[11pt,a4paper]{article}
+
+% ============================================================
+% PACKAGES
+% ============================================================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{geometry}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{tcolorbox}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{parskip}
+\usepackage{pifont} % For checkmarks
+
+% ============================================================
+% PAGE LAYOUT
+% ============================================================
+\geometry{
+    a4paper,
+    left=2.5cm,
+    right=2.5cm,
+    top=3cm,
+    bottom=3cm,
+    headheight=22pt
+}
+
+% ============================================================
+% COLORS
+% ============================================================
+\definecolor{primaryblue}{RGB}{0, 102, 204}
+\definecolor{darkblue}{RGB}{0, 51, 102}
+\definecolor{lightblue}{RGB}{230, 242, 255}
+\definecolor{accentgreen}{RGB}{0, 153, 76}
+\definecolor{warningorange}{RGB}{255, 153, 0}
+\definecolor{codegray}{RGB}{245, 245, 245}
+
+% ============================================================
+% HYPERLINKS
+% ============================================================
+\hypersetup{
+    colorlinks=true,
+    linkcolor=darkblue,
+    urlcolor=primaryblue,
+    citecolor=primaryblue,
+    pdftitle={invisible zkEVVM Litepaper},
+    pdfauthor={EVVM Team},
+    pdfsubject={Confidential and Gasless Virtual Blockchain},
+    pdfkeywords={blockchain, privacy, encryption, arbitrum, FHE}
+}
+
+% ============================================================
+% SECTION FORMATTING
+% ============================================================
+\titleformat{\section}
+{\color{darkblue}\Large\bfseries}
+{\thesection}{1em}{}[\titlerule]
+
+\titleformat{\subsection}
+{\color{primaryblue}\large\bfseries}
+{\thesubsection}{1em}{}
+
+\titleformat{\subsubsection}
+{\color{primaryblue}\normalsize\bfseries}
+{\thesubsubsection}{1em}{}
+
+% ============================================================
+% HEADER & FOOTER
+% ============================================================
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{darkblue}EVVM Litepaper}
+\fancyhead[R]{\small\color{darkblue}\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{primaryblue}\leaders\hrule height \headrulewidth\hfill}}
+
+% ============================================================
+% CUSTOM BOXES
+% ============================================================
+\newtcolorbox{keypoint}{
+    colback=lightblue,
+    colframe=primaryblue,
+    boxrule=1pt,
+    arc=3pt,
+    left=10pt,
+    right=10pt,
+    top=10pt,
+    bottom=10pt
+}
+
+\newtcolorbox{highlight}{
+    colback=codegray,
+    colframe=darkblue,
+    boxrule=0.5pt,
+    arc=2pt,
+    left=8pt,
+    right=8pt,
+    top=8pt,
+    bottom=8pt
+}
+
+% ============================================================
+% DOCUMENT
+% ============================================================
+\begin{document}
+
+% ============================================================
+% TITLE PAGE
+% ============================================================
+\begin{titlepage}
+    \centering
+    \vspace*{3cm}
+
+    {\Huge\bfseries\color{darkblue}Invisible zkEVVM\par}
+    \vspace{0.5cm}
+    {\Large\color{primaryblue}The Confidential and Gasless Virtual Blockchain on Arbitrum\par}
+
+    \vspace{1cm}
+
+    {\large
+    \textbf{Authors}\\[0.3cm]
+    Sebastian Lujan, Artur Vargas
+    \par}
+
+    \vspace{1.5cm}
+
+    \begin{keypoint}
+        \centering
+        \large
+        A virtual blockchain running inside Arbitrum,  \textbf{confidencial}, \textbf{zero gas costs} for users, and \textbf{mathematical verificable using zkp}.
+    \end{keypoint}
+
+    \vspace{3cm}
+
+    {\large
+    \begin{tabular}{ll}
+        \textbf{Version:} & 1.0.0 \\
+        \textbf{Date:} & November 2025 \\
+        \textbf{Status:} & Development \\
+    \end{tabular}
+    \par}
+
+    \vfill
+
+    {\large
+    \par}
+
+\end{titlepage}
+
+% ============================================================
+% TABLE OF CONTENTS
+% ============================================================
+\tableofcontents
+\newpage
+
+% ============================================================
+% QUICK SUMMARY
+% ============================================================
+\section{Quick Summary}
+
+EVVM is a \textbf{virtual blockchain} that runs inside Arbitrum, eliminating servers and gas costs for end users. It combines three critical features:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Full Encryption}: Complete privacy through Fully homomorphic encryption
+    \item \textbf{Fast \& Cheap}: 90\% cost reduction via Arbitrum Stylus interfaces
+    \item \textbf{Mathematically Secure}: Zero-knowledge proofs for verification and Aztec snapshots
+\end{itemize}
+
+\begin{keypoint}
+\textbf{The Vision:} A network where payments and stakes remain completely private, with near-zero costs to users. Achieved by integrating Zama's FHE encryption, Arbitrum's Stylus interface, and the zkFisher relayer.
+\end{keypoint}
+
+\subsection*{Core Technologies}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Zama FHE}: Fully Homomorphic Encryption for private computation
+    \item \textbf{Arbitrum Stylus}: High-performance Rust smart contracts
+    \item \textbf{zkFisher}: Decentralized relayer with zk-proof validation
+    \item \textbf{Solidity Core}: Treasury, payments, and staking management
+\end{itemize}
+
+% ============================================================
+% THE PROBLEM
+% ============================================================
+\section{The Problem We Solve}
+
+\subsection{Privacy Crisis on Public Blockchains}
+
+On networks like Ethereum and Arbitrum, transactions are completely transparent:
+
+\begin{highlight}
+\textbf{What's Publicly Visible:}
+\begin{itemize}[nosep]
+    \item Transaction amounts
+    \item Sender and receiver addresses
+    \item Account balances
+    \item Transaction history and patterns
+\end{itemize}
+\end{highlight}
+
+This transparency creates \textbf{critical risks} for:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Banking}: Lack of compliance and AML issues
+    \item \textbf{Finance}: Exposing trading strategies and portfolio values
+    \item \textbf{Payments}: Revealing spending habits and merchant relationships
+    \item \textbf{Gaming}: Showing in-game asset values and trades
+    \item \textbf{Enterprise}: Disclosing business transaction volumes
+\end{itemize}
+
+\subsection{Current Solutions Fall Short}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Approach} & \textbf{Limitations} & \textbf{Cost} \\
+\midrule
+Mixing Services & Partial privacy & Medium \\
+zk-Rollups & Complex, not fully private & High \\
+Private Chains & Centralized & Variable \\
+Layer 2s & Still public data & Medium-High \\
+\bottomrule
+\end{tabular}
+\caption{Limitations of existing privacy solutions}
+\end{table}
+
+\subsection{The EVVM Solution}
+
+EVVM creates a \textbf{virtual layer} inside Arbitrum where:
+
+\begin{keypoint}
+\begin{itemize}[nosep]
+    \item \textbf{Everything is private} by default
+    \item \textbf{Users pay zero gas}
+    \item \textbf{No central servers} required
+    \item \textbf{Full Arbitrum security} inherited
+\end{itemize}
+\end{keypoint}
+
+% ============================================================
+% ARCHITECTURE
+% ============================================================
+\section{The Architecture}
+
+Invisible zkEVVM operates as a \textbf{hybrid network} within Arbitrum, leveraging the strengths of each component:
+
+\subsection{System Components}
+
+\subsubsection{1. EVVM Core (Solidity)}
+
+The foundation layer handling critical functions:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Payments}: Encrypted balance transfers
+    \item \textbf{Staking}: Private staking mechanisms
+    \item \textbf{Treasury}: Fund management and distribution
+    \item \textbf{FHE Integration}: Zama precompile calls
+\end{itemize}
+
+\begin{highlight}
+\textbf{Key Feature:} Homomorphic encryption enables arithmetic operations (addition, subtraction) on encrypted data without revealing actual values.
+\end{highlight}
+
+\subsubsection{2. Stylus Interface (Rust)}
+
+A lightweight, high-performance layer providing:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{90\% Cost Reduction}: Rust efficiency vs. Solidity
+    \item \textbf{Type Safety}: Compile-time encryption verification
+    \item \textbf{Memory Safety}: No buffer overflows or data leaks
+    \item \textbf{Fast Execution}: Near-native performance
+\end{itemize}
+
+\subsubsection{3. zkFisher Relayer}
+
+The zkFisher relayer serves as the decentralized coordination layer that bridges encrypted user transactions with on-chain verification. Operating autonomously, zkFisher continuously monitors the network for pending encrypted transactions and orchestrates their processing into verified blocks.
+
+The relayer's workflow follows a sophisticated multi-step process. First, it listens for incoming encrypted transactions from users, capturing their transaction data while preserving confidentiality. These transactions are then intelligently grouped into block structures, optimizing for both efficiency and verification cost. For each block, zkFisher generates cryptographic zero-knowledge validity proofs using the Noir proving system, which mathematically demonstrate the correctness of all transactions without revealing their contents. These proofs are subsequently submitted to Arbitrum's verification contracts, where they undergo rigorous validation through the Groth16 backend. Upon successful verification, the encrypted state is updated on-chain, maintaining complete privacy throughout the entire lifecycle.
+
+\begin{keypoint}
+\textbf{Gasless Design:} The relayer and treasury infrastructure cover all gas costs, enabling completely free transactions for end users. This gasless architecture removes economic barriers to privacy-preserving blockchain interactions.
+\end{keypoint}
+
+\subsubsection{4. Zama Connection}
+
+Integration with Zama's FHE infrastructure:
+
+\begin{itemize}[leftmargin=*]
+    \item Contracts call Zama precompiles
+    \item Encrypted operations processed off-chain
+    \item Decentralized computation network
+    \item Results verified and committed on-chain
+\end{itemize}
+
+\subsection{Architecture Diagrams}
+
+The EVVM architecture can be visualized at two levels of abstraction:
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.9\textwidth]{high.png}
+\caption{High-level architecture overview showing the main components and their interactions}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.9\textwidth]{low.png}
+\caption{Detailed architecture diagram showing the complete transaction flow and component relationships}
+\end{figure}
+
+\newpage
+
+\subsection{Transaction Flow}
+
+The EVVM transaction flow creates a seamless bridge between encrypted operations and on-chain verification. We connect the core contracts deployed on Arbitrum (including Staking, Payments, and Treasury) using Zama's Fully Homomorphic Encryption (FHE), with Stylus serving as the high-performance interface layer. The zkFisher relayer acts as the central coordinator, listening to pending transactions and extracting their transaction data.
+
+When a user initiates a transaction, EVVM proposes a \textbf{healthy block}, an initially empty block structure ready to be populated with encrypted transactions. The zkFisher relayer continuously monitors for these healthy blocks and begins the batching process. As transactions arrive, zkFisher stores the transaction block header metadata in a Merkle tree structure managed by AZTEC. For this Merkle tree, zkFisher generates a \textbf{Merkle inclusion proof}, demonstrating that each transaction is properly included in the block. The root of this Merkle tree is called a \textbf{snapshot}, a cryptographic commitment to the state of all transactions at a specific point in time.
+
+At regular intervals defined by epochs (every $x$ blocks), EVVM captures these snapshots to ensure data integrity and enable efficient verification. The zkFisher then generates a zero-knowledge proof using the \textbf{Noir} proving system, which allows for succinct verification of complex computations. To verify this Noir proof on Arbitrum, we employ the \textbf{Groth16 proving backend}, a highly efficient zkSNARK verification system that enables Arbitrum smart contracts to validate the cryptographic proofs in minimal gas cost.
+
+For this verification process, we require an \textbf{Arbitrum Noir verifier}. This critical infrastructure component is currently being developed as a work in progress by another team and has been approved by the Arbitrum DAO, ensuring community support and alignment with Arbitrum's ecosystem roadmap. Once the proof is verified through this verifier, the encrypted state is committed to the blockchain, and the user receives confirmation, all while maintaining complete privacy throughout the entire process.
+
+\begin{highlight}
+\textbf{Result:} An independent blockchain integrated into Arbitrum for enhanced security and scalability, without sacrificing privacy. The combination of FHE, Merkle proofs, and Groth16 verification creates a robust, gasless, and fully private transaction system.
+\end{highlight}
+
+% ============================================================
+% BENEFITS
+% ============================================================
+\section{The Benefits}
+
+\subsection{Total Privacy}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Encrypted Balances}: No one sees account balances
+    \item \textbf{Hidden Transactions}: Transfer amounts remain private
+    \item \textbf{Private Recipients}: Destination addresses obscured
+    \item \textbf{No Validator Access}: Even validators can't decrypt data
+\end{itemize}
+
+\begin{keypoint}
+\textbf{Perfect for:} Sensitive financial applications, private DeFi, confidential payments, and enterprise solutions.
+\end{keypoint}
+
+\subsection{Performance}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{90\% Cost Reduction}: Stylus efficiency over pure Solidity
+    \item \textbf{Fast Blocks}: Seconds, not minutes
+    \item \textbf{High Throughput}: Inherits Arbitrum's TPS capacity
+    \item \textbf{Low Latency}: Near-instant confirmations
+\end{itemize}
+
+\subsection{Security \& Upgradeability}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Audited Code}: Zama's FHE implementation is battle-tested
+    \item \textbf{Merkle inclussion Proofs}: Snapshots for every epoch
+    \item \textbf{Modular Design}: Easy upgrades without breaking changes
+    \item \textbf{Arbitrum Security}: Inherits L2 security guarantees
+\end{itemize}
+
+\subsection{Scalability}
+
+\begin{keypoint}
+\textbf{Arbitrum Foundation:} Leverages Arbitrum's capacity for thousands of transactions per second while maintaining complete privacy.
+\end{keypoint}
+
+\subsection{Comparison Matrix}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lccc}
+\toprule
+\textbf{Feature} & \textbf{Bitcoin/Ethereum} & \textbf{zk-Rollups} & \textbf{EVVM} \\
+\midrule
+Privacy & None & Partial & Full \\
+User Gas Costs & High & Medium & Zero \\
+Speed & Slow & Fast & Very Fast \\
+Scalability & Limited & High & Very High \\
+Security & High & High & Very High \\
+Ease of Use & Medium & Low & High \\
+\bottomrule
+\end{tabular}
+\caption{EVVM vs. other blockchain solutions}
+\end{table}
+
+% ============================================================
+% USE CASE
+% ============================================================
+\section{Use Case: Confidential Coffee Shop}
+
+\subsection{EVVMCafhe - Private Payments in Action}
+
+EVVMCafhe demonstrates the power of EVVM through a real-world application: a coffee shop where customers pay with cryptocurrency while maintaining \textbf{complete financial privacy}. Unlike traditional blockchain payments where transaction amounts and purchase history are visible to anyone, EVVMCafhe ensures that \textbf{no one can see} what customers spend or what they buy. This creates a payment experience that combines the benefits of cryptocurrency with the privacy expectations of traditional cash transactions.
+
+\subsection{How It Works}
+
+The EVVMCafhe payment flow showcases EVVM's elegant integration of privacy technologies. The process begins with \textbf{deployment}, where the EVVMCafhe smart contract is deployed on Arbitrum using the Stylus interface, enabling high-performance encrypted operations. When a customer wants to purchase a coffee, they initiate a transaction by \textbf{encrypting the payment amount} locally on their device. For example, a \$5 coffee purchase is converted into an encrypted value that only the user can generate but no one can read.
+
+Before the transaction is submitted, the client generates a \textbf{cryptographic validity proof} that demonstrates the transaction is legitimate without revealing any sensitive information. The user then \textbf{signs the encrypted transaction} with their private key, establishing authenticity and authorization. This signed, encrypted transaction is sent to the EVVM network for processing.
+
+Upon receiving the transaction, the smart contract performs critical \textbf{verification steps}, checking both the cryptographic signature and the validity proof to ensure the transaction is authorized and correctly formed. Once verified, the \textbf{EVVM Core executes the encrypted payment}, performing homomorphic operations that subtract the encrypted amount from the customer's encrypted balance and simultaneously add it to the coffee shop's encrypted balance. Throughout this entire process, the actual payment amount remains encrypted and hidden from all observers, including validators, block explorers, and even the smart contract itself.
+
+Finally, the system provides \textbf{confirmation} to both parties that the transaction has completed successfully. The customer's wallet updates to reflect the payment, the merchant receives confirmation of funds, and all transaction data remains completely private. This seamless flow demonstrates how EVVM makes privacy-preserving payments practical and user-friendly.
+
+\subsection{Practical Benefits}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Merchant}: Receives instant, verified payments without accessing customer data
+    \item \textbf{Customer}: Pays with zero gas fees and complete privacy
+    \item \textbf{Owner}: Withdraws encrypted funds on demand
+    \item \textbf{Privacy}: Transaction amounts never revealed on-chain
+\end{itemize}
+
+\begin{keypoint}
+\textbf{Perfect Applications:}
+\begin{itemize}[nosep]
+    \item E-commerce platforms
+    \item Gaming item purchases
+    \item Donation systems
+    \item Subscription services
+    \item Private marketplaces
+\end{itemize}
+\end{keypoint}
+
+\subsection{Performance Metrics}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lr}
+\toprule
+\textbf{Metric} & \textbf{Value} \\
+\midrule
+Gas Cost per Order & $\sim$10,000 gas \\
+Transaction Time & $<$ 5 seconds \\
+User Cost & \$0 \\
+Privacy Level & 100\% \\
+\bottomrule
+\end{tabular}
+\caption{EVVMCafhe performance metrics}
+\end{table}
+
+\begin{highlight}
+\textbf{Security:} All validations happen on-chain. The system is trustless and cryptographically secure.
+\end{highlight}
+
+% ============================================================
+% CURRENT STATUS
+% ============================================================
+\section{Current Status and Future}
+
+\subsection{Roadmap}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lll}
+\toprule
+\textbf{Phase} & \textbf{Timeline} & \textbf{Status} \\
+\midrule
+Sepolia Testnet & Q4 2025 & \textcolor{accentgreen}{\ding{51} Live} \\
+MVP Launch & Dec 2025 & \textcolor{warningorange}{In Progress} \\
+Mainnet Alpha & Q1 2026 & Planned \\
+Full Mainnet & Q2 2026 & Planned \\
+\bottomrule
+\end{tabular}
+\caption{Invisible ZkEVVM development roadmap}
+\end{table}
+
+\subsection{Current Achievements}
+
+\begin{itemize}[leftmargin=*]
+    \item \textcolor{accentgreen}{\textbf{\ding{51}}} Core contracts deployed on Arbitrum Sepolia
+    \item \textcolor{accentgreen}{\textbf{\ding{51}}} Stylus interface implemented and tested
+    \item \textcolor{accentgreen}{\textbf{\ding{51}}} zkFisher relayer operational
+    \item \textcolor{accentgreen}{\textbf{\ding{51}}} Zama FHE integration complete
+    \item \textcolor{accentgreen}{\textbf{\ding{51}}} EVVMCafhe demo application live
+\end{itemize}
+
+\subsection{Future Applications}
+
+EVVM opens the door to entirely new categories of privacy-preserving applications:
+
+\subsubsection{Private DeFi}
+\begin{itemize}[leftmargin=*]
+    \item Confidential lending and borrowing
+    \item Private yield farming
+    \item Hidden trading strategies
+    \item Anonymous liquidity provision
+\end{itemize}
+
+\subsubsection{Enterprise Solutions}
+\begin{itemize}[leftmargin=*]
+    \item Private supply chain tracking
+    \item Confidential payroll systems
+    \item Hidden B2B transactions
+    \item Private procurement
+\end{itemize}
+
+\subsubsection{Gaming \& NFTs}
+\begin{itemize}[leftmargin=*]
+    \item Hidden in-game economies
+    \item Private NFT trading
+    \item Confidential marketplace sales
+    \item Secret item attributes
+\end{itemize}
+
+\subsubsection{Payments}
+\begin{itemize}[leftmargin=*]
+    \item Privacy-preserving payment rails
+    \item Confidential merchant solutions
+    \item Anonymous subscription services
+    \item Private donation platforms
+\end{itemize}
+
+% ============================================================
+% TECHNICAL SPECIFICATIONS
+% ============================================================
+\section{Technical Specifications}
+
+\subsection{Network Parameters}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{Parameter} & \textbf{Value} \\
+\midrule
+Base Layer & Arbitrum One (Mainnet) / Sepolia (Testnet) \\
+Block Time & $\sim$2-5 seconds \\
+Finality & 15 minutes (L1 finality) \\
+TPS Capacity & 4,000+ (Arbitrum limit) \\
+Encryption & Zama FHE (TFHE) \\
+Proof System & Merkle inclusion proof (Aztec-noir) \\
+Smart Contract Lang & Solidity + Rust (Stylus) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Contract Architecture}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{EVVMCore.sol}: Main Solidity contract for payments, staking, treasury
+    \item \textbf{Stylus Interface}: Rust layer for efficient encrypted operations
+    \item \textbf{zkFisher}: Off-chain relayer with proof generation
+    \item \textbf{Zama Precompiles}: FHE operation handlers
+\end{itemize}
+
+
+% ============================================================
+% CONCLUSION
+% ============================================================
+\section{Summary}
+
+EVVM represents a \textbf{paradigm shift} in blockchain technology: the first fully private, gasless, and scalable virtual blockchain running inside Arbitrum.
+
+\begin{keypoint}
+\centering
+\large
+\textbf{Our Vision:}\\
+\vspace{0.3cm}
+A future where privacy is the default, not an afterthought.\\
+\vspace{0.3cm}
+Where users transact freely without costs or surveillance.\\
+\vspace{0.3cm}
+Where businesses build without compromising customer data.
+\end{keypoint}
+
+\vspace{1cm}
+
+Join us in building this future.
+
+\vfill
+
+\begin{center}
+\large
+\textbf{ZKEVVM: Gasless private infrastructure}
+
+\vspace{0.5cm}
+
+\end{center}
+
+\end{document}

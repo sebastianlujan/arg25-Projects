@@ -1,0 +1,11 @@
+[alias]
+# Aliases for common commands
+t = "test"  # cargo t = cargo test (std is now default)
+
+# Build WASM with correct flags
+wasm = "build --release --target wasm32-unknown-unknown --no-default-features"
+wasm-check = "check --target wasm32-unknown-unknown --no-default-features"
+
+[target.wasm32-unknown-unknown]
+# Automatically disable default features (std) for WASM builds
+rustflags = []

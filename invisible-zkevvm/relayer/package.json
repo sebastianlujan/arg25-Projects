@@ -1,0 +1,59 @@
+{
+  "name": "@invisible-zkevvm/relayer",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/sebastianlujan/arg25-Projects.git",
+  "author": "Sebastian Lujan, Artur Vargas",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "fees": "node --loader ts-node/esm scripts/fees.ts",
+    "fees::devnet": "AZTEC_ENV=devnet node --loader ts-node/esm scripts/fees.ts",
+    "clean": "rm -rf ./src/artifacts ./target",
+    "clear-store": "rm -rf ./store",
+    "codegen": "aztec codegen target --outdir src/artifacts",
+    "compile": "${AZTEC_NARGO:-aztec-nargo} compile && aztec-postprocess-contract",
+    "deploy": "node --loader ts-node/esm scripts/deploy_contract.ts",
+    "deploy::devnet": "AZTEC_ENV=devnet node --loader ts-node/esm scripts/deploy_contract.ts",
+    "deploy-account": "node --loader ts-node/esm scripts/deploy_account.ts",
+    "deploy-account::devnet": "AZTEC_ENV=devnet node --loader ts-node/esm scripts/deploy_account.ts",
+    "interaction-existing-contract": "node --loader ts-node/esm scripts/interaction_existing_contract.ts",
+    "interaction-existing-contract::devnet": "AZTEC_ENV=devnet node --loader ts-node/esm scripts/interaction_existing_contract.ts",
+    "multiple-wallet": "node --loader ts-node/esm scripts/multiple_wallet.ts",
+    "multiple-wallet::devnet": "AZTEC_ENV=devnet node --loader ts-node/esm scripts/multiple_wallet.ts",
+    "get-block": "node --loader ts-node/esm scripts/get_block.ts",
+    "get-block::devnet": "AZTEC_ENV=devnet node --loader ts-node/esm scripts/get_block.ts",
+    "profile": "node --loader ts-node/esm scripts/profile_deploy.ts",
+    "profile::devnet": "AZTEC_ENV=devnet node --loader ts-node/esm scripts/profile_deploy.ts",
+    "test": "yarn test:js && yarn test:nr",
+    "test::devnet": "AZTEC_ENV=devnet yarn test:js",
+    "test:js": "rm -rf store/pxe && NODE_NO_WARNINGS=1 node --experimental-vm-modules $(yarn bin jest) --no-cache --runInBand --config jest.integration.config.json",
+    "test:nr": "aztec test",
+    "update": "./.github/scripts/update_contract.sh $(grep -oP 'tag\\s*=\\s*\"\\K[^\"]+' \"Nargo.toml\" | head -1) && yarn && yarn update-readme-version",
+    "update-readme-version": "node ./.github/scripts/update-readme-version.js"
+  },
+  "dependencies": {
+    "@aztec/accounts": "3.0.0-devnet.4",
+    "@aztec/aztec.js": "3.0.0-devnet.4",
+    "@aztec/noir-contracts.js": "3.0.0-devnet.4",
+    "@aztec/protocol-contracts": "3.0.0-devnet.4",
+    "@aztec/pxe": "3.0.0-devnet.4",
+    "@aztec/stdlib": "3.0.0-devnet.4",
+    "@aztec/test-wallet": "3.0.0-devnet.4",
+    "dotenv": "^17.2.2"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.11",
+    "@types/mocha": "^10.0.6",
+    "@types/node": "^22.15.1",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.4"
+  },
+  "jest": {
+    "testTimeout": 200000
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+}

@@ -1,0 +1,11 @@
+# Private keys and secrets
+*.pem
+*.key
+.env
+.env.local
+.env.production
+**/.ssh/*
+**/keys/*
+**/secrets/*
+wallet.json
+keystore/

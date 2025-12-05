@@ -1,0 +1,159 @@
+# Foundry Deployment Makefile for EVVM Core
+# Usage: make -f Makefile.foundry <target>
+
+.PHONY: help deploy deploy-verify simulate clean-deployments verify-contract check-balance
+
+# Load environment variables
+ifneq (,$(wildcard ./.env))
+    include .env
+    export
+endif
+
+# Configuration
+RPC_URL := $(ARBITRUM_SEPOLIA_RPC_URL)
+CHAIN_ID := 421614
+SCRIPT := script/DeployEVVMCore.s.sol:DeployEVVMCore
+ADVANCED_SCRIPT := script/DeployEVVMCoreAdvanced.s.sol:DeployEVVMCoreAdvanced
+
+# Colors for output
+GREEN := \033[0;32m
+YELLOW := \033[0;33m
+RED := \033[0;31m
+NC := \033[0m # No Color
+
+help: ## Show this help message
+	@echo "$(GREEN)EVVM Core Foundry Deployment$(NC)"
+	@echo ""
+	@echo "Available targets:"
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(YELLOW)%-20s$(NC) %s\n", $$1, $$2}'
+	@echo ""
+	@echo "$(YELLOW)Prerequisites:$(NC)"
+	@echo "  1. Install Foundry: curl -L https://foundry.paradigm.xyz | bash && foundryup"
+	@echo "  2. Copy .env.example to .env and fill in values"
+	@echo "  3. Get Arbitrum Sepolia ETH from faucet"
+	@echo ""
+
+check-env: ## Check if environment variables are set
+	@echo "$(GREEN)Checking environment...$(NC)"
+	@if [ -z "$(PRIVATE_KEY)" ]; then \
+		echo "$(RED)Error: PRIVATE_KEY not set in .env$(NC)"; \
+		exit 1; \
+	fi
+	@if [ -z "$(RPC_URL)" ]; then \
+		echo "$(RED)Error: ARBITRUM_SEPOLIA_RPC_URL not set in .env$(NC)"; \
+		exit 1; \
+	fi
+	@echo "$(GREEN)✓ Environment configured$(NC)"
+
+check-balance: check-env ## Check deployer balance
+	@echo "$(GREEN)Checking deployer balance...$(NC)"
+	@cast balance $$(cast wallet address $(PRIVATE_KEY)) --rpc-url $(RPC_URL)
+
+install: ## Install dependencies
+	@echo "$(GREEN)Installing Foundry dependencies...$(NC)"
+	forge install foundry-rs/forge-std --no-commit
+	@echo "$(GREEN)Installing npm dependencies...$(NC)"
+	npm install
+
+build: ## Build contracts
+	@echo "$(GREEN)Building contracts...$(NC)"
+	forge build
+
+test: ## Run tests
+	@echo "$(GREEN)Running tests...$(NC)"
+	forge test -vvv
+
+simulate: check-env ## Simulate deployment without broadcasting
+	@echo "$(GREEN)Simulating deployment...$(NC)"
+	forge script $(SCRIPT) \
+		--rpc-url $(RPC_URL) \
+		-vvvv
+
+deploy: check-env check-balance ## Deploy EVVMCore to Arbitrum Sepolia
+	@echo "$(GREEN)Deploying EVVMCore to Arbitrum Sepolia...$(NC)"
+	@mkdir -p deployments
+	forge script $(SCRIPT) \
+		--rpc-url $(RPC_URL) \
+		--broadcast \
+		-vvvv
+	@echo "$(GREEN)✓ Deployment complete!$(NC)"
+	@echo "$(YELLOW)Check deployments/arbitrum-sepolia.txt for contract addresses$(NC)"
+
+deploy-verify: check-env check-balance ## Deploy and verify EVVMCore
+	@echo "$(GREEN)Deploying and verifying EVVMCore...$(NC)"
+	@mkdir -p deployments
+	forge script $(SCRIPT) \
+		--rpc-url $(RPC_URL) \
+		--broadcast \
+		--verify \
+		--etherscan-api-key $(ETHERSCAN_API_KEY) \
+		-vvvv
+	@echo "$(GREEN)✓ Deployment and verification complete!$(NC)"
+
+deploy-advanced: check-env check-balance ## Deploy with advanced script
+	@echo "$(GREEN)Deploying with advanced configuration...$(NC)"
+	@mkdir -p deployments
+	forge script $(ADVANCED_SCRIPT) \
+		--rpc-url $(RPC_URL) \
+		--broadcast \
+		-vvvv
+
+verify-contract: check-env ## Verify already deployed contract (CONTRACT_ADDRESS required)
+	@if [ -z "$(CONTRACT_ADDRESS)" ]; then \
+		echo "$(RED)Error: CONTRACT_ADDRESS not set$(NC)"; \
+		echo "Usage: make -f Makefile.foundry verify-contract CONTRACT_ADDRESS=0x..."; \
+		exit 1; \
+	fi
+	@echo "$(GREEN)Verifying contract at $(CONTRACT_ADDRESS)...$(NC)"
+	forge verify-contract \
+		--chain-id $(CHAIN_ID) \
+		--num-of-optimizations 200 \
+		--watch \
+		--compiler-version v0.8.24 \
+		--via-ir \
+		--etherscan-api-key $(ETHERSCAN_API_KEY) \
+		$(CONTRACT_ADDRESS) \
+		contracts/core/EVVMCore.sol:EVVMCore
+
+clean-deployments: ## Clean deployment artifacts
+	@echo "$(YELLOW)Cleaning deployment artifacts...$(NC)"
+	rm -rf deployments/*.txt deployments/*.env
+	rm -rf broadcast/
+	@echo "$(GREEN)✓ Cleaned$(NC)"
+
+clean: clean-deployments ## Clean all build artifacts
+	@echo "$(YELLOW)Cleaning build artifacts...$(NC)"
+	forge clean
+	@echo "$(GREEN)✓ Cleaned$(NC)"
+
+# Contract interaction commands
+call-owner: check-env ## Get contract owner (CONTRACT_ADDRESS required)
+	@if [ -z "$(CONTRACT_ADDRESS)" ]; then \
+		echo "$(RED)Error: CONTRACT_ADDRESS not set$(NC)"; \
+		exit 1; \
+	fi
+	cast call $(CONTRACT_ADDRESS) "owner()(address)" --rpc-url $(RPC_URL)
+
+call-chain-name: check-env ## Get chain name (CONTRACT_ADDRESS required)
+	@if [ -z "$(CONTRACT_ADDRESS)" ]; then \
+		echo "$(RED)Error: CONTRACT_ADDRESS not set$(NC)"; \
+		exit 1; \
+	fi
+	cast call $(CONTRACT_ADDRESS) "chainName()(string)" --rpc-url $(RPC_URL)
+
+call-is-initialized: check-env ## Check if initialized (CONTRACT_ADDRESS required)
+	@if [ -z "$(CONTRACT_ADDRESS)" ]; then \
+		echo "$(RED)Error: CONTRACT_ADDRESS not set$(NC)"; \
+		exit 1; \
+	fi
+	cast call $(CONTRACT_ADDRESS) "initialized()(bool)" --rpc-url $(RPC_URL)
+
+status: check-env ## Show deployment status
+	@echo "$(GREEN)EVVM Core Deployment Status$(NC)"
+	@echo "================================"
+	@if [ -f "./deployments/arbitrum-sepolia-latest.env" ]; then \
+		echo "$(GREEN)Latest Deployment Found:$(NC)"; \
+		cat ./deployments/arbitrum-sepolia-latest.env; \
+	else \
+		echo "$(YELLOW)No deployment found$(NC)"; \
+	fi

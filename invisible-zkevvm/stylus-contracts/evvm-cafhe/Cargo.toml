@@ -1,0 +1,22 @@
+[package]
+name = "evvm-cafhe"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Coffee shop example contract using EVVM with FHE payments on Arbitrum Stylus"
+autobins = false
+
+[dependencies]
+stylus-sdk = { workspace = true }
+wee_alloc = "0.4.5"
+fhe-stylus = { path = "../fhe-stylus" }
+
+[features]
+# Default feature for native builds (tests, docs, etc)
+# WASM builds will use --no-default-features automatically
+default = ["std"]
+# Enable std for native tests
+std = []
+
+[lib]
+crate-type = ["lib", "cdylib"]
