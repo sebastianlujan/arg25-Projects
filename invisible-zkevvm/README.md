@@ -125,7 +125,7 @@ We created learning examples (Counter and Voting) using CoFhe to understand the 
 
 **Progress Summary:**
 
-We created **Stylus (Rust) interfaces** for optimized interaction with EVVM Solidity-FHE contracts, enabling high-performance calls from Rust contracts. We developed the **EVVM-CAFHE** example that demonstrates the complete interaction between Stylus and EVVM with FHE, showing the encrypted data flow between both layers. We documented the hybrid architecture, workflows, and implementation guides in the [docs/](https://github.com/sebastianlujan/arg25-Projects/tree/EVVM-zkEVVM/invisible-zkevvm/docs) folder.
+We created **Stylus (Rust) interfaces** for optimized interaction with EVVM Solidity-FHE contracts, enabling high-performance calls from Rust contracts. We developed the **EVVM-CAFHE** example that demonstrates the complete interaction between Stylus and EVVM with FHE, showing the encrypted data flow between both layers. We documented the hybrid architecture, workflows, and implementation guides in the [docs/](https://github.com/sebastianlujan/arg25-Projects/tree/confidential-evvm/invisible-zkevvm/docs) folder.
 
 ## Relayer Architecture (zkFisher)
 
@@ -165,7 +165,7 @@ This architecture ensures that EVVM transaction history can be maintained privat
 
 _After Week 3, summarize your final state: deliverables, repo links, and outcomes._
 
-- **Main Repository Link:** [GitHub Repository](https://github.com/sebastianlujan/arg25-Projects/tree/EVVM-zkEVVM/invisible-zkevvm)
+- **Main Repository Link:** [GitHub Repository](https://github.com/sebastianlujan/arg25-Projects/tree/confidential-evvm/invisible-zkevvm)
 
 - **Demo / Deployment Link (if any):**
 
@@ -174,10 +174,10 @@ _After Week 3, summarize your final state: deliverables, repo links, and outcome
   - **Network:** Arbitrum Sepolia (Chain ID: 421614)
 
 - **Slides / Presentation (if any):**
-  - **Litepaper:** [LITEPAPER.pdf](https://github.com/sebastianlujan/arg25-Projects/blob/EVVM-zkEVVM/invisible-zkevvm/stylus-contracts/litepaper/LITEPAPER.pdf)
-  - Technical documentation available in [docs/](https://github.com/sebastianlujan/arg25-Projects/tree/EVVM-zkEVVM/invisible-zkevvm/docs)
-  - Implementation guides: [FHE_SETUP.md](https://github.com/sebastianlujan/arg25-Projects/tree/EVVM-zkEVVM/invisible-zkevvm/docs/FHE_SETUP.md), [TREASURY_GUIDE.md](https://github.com/sebastianlujan/arg25-Projects/tree/EVVM-zkEVVM/invisible-zkevvm/docs/TREASURY_GUIDE.md), [STAKING_ENCRYPTED_INPUTS.md](https://github.com/sebastianlujan/arg25-Projects/tree/EVVM-zkEVVM/invisible-zkevvm/docs/STAKING_ENCRYPTED_INPUTS.md)
-  - Implementation plan: [IMPLEMENTATION_PLAN.md](https://github.com/sebastianlujan/arg25-Projects/tree/EVVM-zkEVVM/invisible-zkevvm/docs/IMPLEMENTATION_PLAN.md)
+  - **Litepaper:** [LITEPAPER.pdf](https://github.com/sebastianlujan/arg25-Projects/blob/confidential-evvm/invisible-zkevvm/stylus-contracts/litepaper/LITEPAPER.pdf)
+  - Technical documentation available in [docs/](https://github.com/sebastianlujan/arg25-Projects/tree/confidential-evvm/invisible-zkevvm/docs)
+  - Implementation guides: [FHE_SETUP.md](https://github.com/sebastianlujan/arg25-Projects/tree/confidential-evvm/invisible-zkevvm/docs/FHE_SETUP.md), [TREASURY_GUIDE.md](https://github.com/sebastianlujan/arg25-Projects/tree/confidential-evvm/invisible-zkevvm/docs/TREASURY_GUIDE.md), [STAKING_ENCRYPTED_INPUTS.md](https://github.com/sebastianlujan/arg25-Projects/tree/confidential-evvm/invisible-zkevvm/docs/STAKING_ENCRYPTED_INPUTS.md)
+  - Implementation plan: [IMPLEMENTATION_PLAN.md](https://github.com/sebastianlujan/arg25-Projects/tree/confidential-evvm/invisible-zkevvm/docs/IMPLEMENTATION_PLAN.md)
 
 **Completed Deliverables:**
 
@@ -253,16 +253,16 @@ _If you plan to continue development beyond ARG25, what's next?_
 
 ## Technical Documentation
 
-For more technical details about the project, see the documentation in the [docs/](https://github.com/sebastianlujan/arg25-Projects/tree/EVVM-zkEVVM/invisible-zkevvm/docs) folder:
+For more technical details about the project, see the documentation in the [docs/](https://github.com/sebastianlujan/arg25-Projects/tree/confidential-evvm/invisible-zkevvm/docs) folder:
 
-- **[FHE_SETUP.md](https://github.com/sebastianlujan/arg25-Projects/tree/EVVM-zkEVVM/invisible-zkevvm/docs/FHE_SETUP.md)** - Complete Zama FHE setup guide
-- **[TREASURY_GUIDE.md](https://github.com/sebastianlujan/arg25-Projects/tree/EVVM-zkEVVM/invisible-zkevvm/docs/TREASURY_GUIDE.md)** - TreasuryVault usage guide with FHE
-- **[STAKING_ENCRYPTED_INPUTS.md](https://github.com/sebastianlujan/arg25-Projects/tree/EVVM-zkEVVM/invisible-zkevvm/docs/STAKING_ENCRYPTED_INPUTS.md)** - Encrypted inputs guide for Staking
-- **[IMPLEMENTATION_PLAN.md](https://github.com/sebastianlujan/arg25-Projects/tree/EVVM-zkEVVM/invisible-zkevvm/docs/IMPLEMENTATION_PLAN.md)** - Detailed implementation plan
-- **[PROGRESS.md](https://github.com/sebastianlujan/arg25-Projects/tree/EVVM-zkEVVM/invisible-zkevvm/docs/PROGRESS.md)** - Detailed progress report
-- **[SPEC.md](https://github.com/sebastianlujan/arg25-Projects/tree/EVVM-zkEVVM/invisible-zkevvm/docs/SPEC.md)** - Technical specifications of the project
-- **[DEPLOYMENT_SUMMARY.md](https://github.com/sebastianlujan/arg25-Projects/tree/EVVM-zkEVVM/invisible-zkevvm/DEPLOYMENT_SUMMARY.md)** - Deployment summary
-- **[QUICK_DEPLOY.md](https://github.com/sebastianlujan/arg25-Projects/tree/EVVM-zkEVVM/invisible-zkevvm/QUICK_DEPLOY.md)** - Quick deployment guide
+- **[FHE_SETUP.md](https://github.com/sebastianlujan/arg25-Projects/tree/confidential-evvm/invisible-zkevvm/docs/FHE_SETUP.md)** - Complete Zama FHE setup guide
+- **[TREASURY_GUIDE.md](https://github.com/sebastianlujan/arg25-Projects/tree/confidential-evvm/invisible-zkevvm/docs/TREASURY_GUIDE.md)** - TreasuryVault usage guide with FHE
+- **[STAKING_ENCRYPTED_INPUTS.md](https://github.com/sebastianlujan/arg25-Projects/tree/confidential-evvm/invisible-zkevvm/docs/STAKING_ENCRYPTED_INPUTS.md)** - Encrypted inputs guide for Staking
+- **[IMPLEMENTATION_PLAN.md](https://github.com/sebastianlujan/arg25-Projects/tree/confidential-evvm/invisible-zkevvm/docs/IMPLEMENTATION_PLAN.md)** - Detailed implementation plan
+- **[PROGRESS.md](https://github.com/sebastianlujan/arg25-Projects/tree/confidential-evvm/invisible-zkevvm/docs/PROGRESS.md)** - Detailed progress report
+- **[SPEC.md](https://github.com/sebastianlujan/arg25-Projects/tree/confidential-evvm/invisible-zkevvm/docs/SPEC.md)** - Technical specifications of the project
+- **[DEPLOYMENT_SUMMARY.md](https://github.com/sebastianlujan/arg25-Projects/tree/confidential-evvm/invisible-zkevvm/DEPLOYMENT_SUMMARY.md)** - Deployment summary
+- **[QUICK_DEPLOY.md](https://github.com/sebastianlujan/arg25-Projects/tree/confidential-evvm/invisible-zkevvm/QUICK_DEPLOY.md)** - Quick deployment guide
 
 ## References
 
