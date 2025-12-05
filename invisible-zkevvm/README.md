@@ -7,7 +7,7 @@ You'll update your progress weekly **in the same PR**, so mentors and reviewers 
 
 ## Project Title
 
-**zkEvvm - Stylus Smart Contract Project**
+**Confidential-EVVM**
 
 ## Team
 
@@ -19,11 +19,11 @@ You'll update your progress weekly **in the same PR**, so mentors and reviewers 
 
 _What are you building and why does it matter? Explain the core problem and your proposed solution._
 
-This project implements a complete migration of the **EVVM (Ethereum Virtual Virtual Machine)** protocol to a hybrid architecture that combines **Zama FHEVM** (Fully Homomorphic Encryption) with **Arbitrum Stylus**.
+This project implements a complete migration of the **EVVM (Ethereum Virtual Virtual Machine)** protocol to a hybrid architecture that combines **Cofhe from Fhenix** (Fully Homomorphic Encryption) with **Arbitrum Stylus**.
 
 **The Problem:** Public blockchains expose all data transparently, which limits use cases that require privacy (voting, staking, treasury management, etc.). EVVM enables creating virtual blockchains, but needs privacy capabilities for institutional use cases.
 
-**Our Solution:** We migrated EVVM's core contracts (EVVMCore, TreasuryVault, StakingManager) to use **encrypted data** through Zama FHEVM, enabling operations on encrypted data without exposing sensitive information. Additionally, we created interfaces in **Rust/Stylus** for high-performance interaction with these contracts, leveraging Stylus performance advantages while maintaining ABI compatibility with Solidity. The system includes a **relayer (zkFisher)** that monitors Arbitrum blocks, captures EVVM transactions, and maintains private state snapshots through Merkle Trees stored in Aztec contracts.
+**Our Solution:** We migrated EVVM's core contracts (EVVMCore, TreasuryVault, StakingManager) to use **encrypted data** through FHE, enabling operations on encrypted data without exposing sensitive information. Additionally, we created interfaces in **Rust/Stylus** for high-performance interaction with these contracts, leveraging Stylus performance advantages while maintaining ABI compatibility with Solidity. The system includes a **relayer (zkFisher)** that monitors Arbitrum blocks, captures EVVM transactions, and maintains private state snapshots through Merkle Trees stored in Aztec contracts.
 
 **Main Components:**
 
@@ -49,10 +49,7 @@ _List all the technologies, frameworks, and tools you are using._
 
 ### FHE Technologies
 
-- **Zama FHEVM** - Homomorphic encryption framework for blockchain
-- **@fhevm/solidity** (^0.9.0) - Solidity library for FHE operations
-- **@fhevm/hardhat-plugin** (^0.3.0-0) - Hardhat plugin for FHE development
-- **@zama-fhe/relayer-sdk** (^0.3.0-5) - SDK for FHE operations relayer
+- **Cofhe FHENIX** - Homomorphic encryption framework for blockchain
 
 ### Development Tools
 
@@ -80,7 +77,7 @@ _List all the technologies, frameworks, and tools you are using._
 
 _What are the specific outcomes you aim to achieve by the end of ARG25?_
 
-- Migrate EVVM core contracts (EVVMCore, TreasuryVault, StakingManager, VotingFHE) to Zama FHEVM with encrypted data
+- Migrate EVVM core contracts (EVVMCore, TreasuryVault, StakingManager, VotingFHE) to Cofhe with encrypted data
 - Implement FHE operations (addition, multiplication, comparisons) on encrypted data
 - Create Rust/Stylus interfaces for optimized interaction with Solidity-FHE contracts
 - Deploy contracts to Arbitrum Sepolia testnet
@@ -103,20 +100,20 @@ _What are the specific outcomes you aim to achieve by the end of ARG25?_
 
 **Progress Summary:**
 
-We defined the complete project architecture: migration of EVVM to a hybrid architecture using Zama FHEVM for privacy and Arbitrum Stylus for performance. We analyzed the main components to migrate (EVVMCore, TreasuryVault, StakingManager, VotingFHE) and established the technology stack. We received valuable feedback from mentors on the approach and system design.
+We defined the complete project architecture: migration of EVVM to a hybrid architecture using CoFhe for privacy and Arbitrum Stylus for performance. We analyzed the main components to migrate (EVVMCore, TreasuryVault, StakingManager) and established the technology stack. We received valuable feedback from mentors on the approach and system design.
 
 ### Week 2 (ends Nov 7)
 
 **Goals:**
 
-- Create learning examples with Zama FHE
+- Create learning examples with CoFhe
 - Migrate EVVMCore to FHE
 - Migrate Treasury and Staking contracts to FHE
 - Develop unit tests
 
 **Progress Summary:**
 
-We created learning examples (Counter and Voting) using Zama FHE to understand the workflow with encrypted data. We completed the first version of **EVVMCore migrated to Zama FHE**, with encrypted balances, rewards, and metadata using `euint64`. We migrated the **TreasuryVault** and **StakingManager** contracts to FHE, implementing encrypted operations for deposits, withdrawals, staking, and rewards. We created **unit tests** to validate the functionality of the migrated contracts.
+We created learning examples (Counter and Voting) using CoFhe to understand the workflow with encrypted data. We completed the first version of **EVVMCore migrated to CoFHE**, with encrypted balances, rewards, and metadata using `euint64`. We migrated the **TreasuryVault** and **StakingManager** contracts to FHE, implementing encrypted operations for deposits, withdrawals, staking, and rewards. We created **unit tests** to validate the functionality of the migrated contracts.
 
 ### 🗓️ Week 3 (ends Nov 14)
 
@@ -128,7 +125,7 @@ We created learning examples (Counter and Voting) using Zama FHE to understand t
 
 **Progress Summary:**
 
-We created **Stylus (Rust) interfaces** for optimized interaction with EVVM Solidity-FHE contracts, enabling high-performance calls from Rust contracts. We developed the **EVVM-CAFHE** example that demonstrates the complete interaction between Stylus and EVVM with FHE, showing the encrypted data flow between both layers. We documented the hybrid architecture, workflows, and implementation guides in the `docs/` folder.
+We created **Stylus (Rust) interfaces** for optimized interaction with EVVM Solidity-FHE contracts, enabling high-performance calls from Rust contracts. We developed the **EVVM-CAFHE** example that demonstrates the complete interaction between Stylus and EVVM with FHE, showing the encrypted data flow between both layers. We documented the hybrid architecture, workflows, and implementation guides in the [docs/](https://github.com/sebastianlujan/arg25-Projects/tree/EVVM-zkEVVM/invisible-zkevvm/docs) folder.
 
 ## Relayer Architecture (zkFisher)
 
@@ -168,7 +165,7 @@ This architecture ensures that EVVM transaction history can be maintained privat
 
 _After Week 3, summarize your final state: deliverables, repo links, and outcomes._
 
-- **Main Repository Link:** [GitHub Repository](https://github.com/sebastianlujan/arg25-Projects/tree/main/invisible-zkevvm)
+- **Main Repository Link:** [GitHub Repository](https://github.com/sebastianlujan/arg25-Projects/tree/EVVM-zkEVVM/invisible-zkevvm)
 
 - **Demo / Deployment Link (if any):**
 
@@ -177,9 +174,10 @@ _After Week 3, summarize your final state: deliverables, repo links, and outcome
   - **Network:** Arbitrum Sepolia (Chain ID: 421614)
 
 - **Slides / Presentation (if any):**
-  - Technical documentation available in `docs/`
-  - Implementation guides: `docs/FHE_SETUP.md`, `docs/TREASURY_GUIDE.md`, `docs/STAKING_ENCRYPTED_INPUTS.md`
-  - Implementation plan: `docs/IMPLEMENTATION_PLAN.md`
+  - **Litepaper:** [LITEPAPER.pdf](https://github.com/sebastianlujan/arg25-Projects/blob/EVVM-zkEVVM/invisible-zkevvm/stylus-contracts/litepaper/LITEPAPER.pdf)
+  - Technical documentation available in [docs/](https://github.com/sebastianlujan/arg25-Projects/tree/EVVM-zkEVVM/invisible-zkevvm/docs)
+  - Implementation guides: [FHE_SETUP.md](https://github.com/sebastianlujan/arg25-Projects/tree/EVVM-zkEVVM/invisible-zkevvm/docs/FHE_SETUP.md), [TREASURY_GUIDE.md](https://github.com/sebastianlujan/arg25-Projects/tree/EVVM-zkEVVM/invisible-zkevvm/docs/TREASURY_GUIDE.md), [STAKING_ENCRYPTED_INPUTS.md](https://github.com/sebastianlujan/arg25-Projects/tree/EVVM-zkEVVM/invisible-zkevvm/docs/STAKING_ENCRYPTED_INPUTS.md)
+  - Implementation plan: [IMPLEMENTATION_PLAN.md](https://github.com/sebastianlujan/arg25-Projects/tree/EVVM-zkEVVM/invisible-zkevvm/docs/IMPLEMENTATION_PLAN.md)
 
 **Completed Deliverables:**
 
@@ -197,9 +195,9 @@ _What did you learn or improve during ARG25?_
 
 ### Fully Homomorphic Encryption (FHE)
 
-- **Zama FHEVM**: We learned to use homomorphic encryption in blockchain, enabling operations on encrypted data without exposing sensitive information
+- **CoFHE**: We learned to use homomorphic encryption in blockchain, enabling operations on encrypted data without exposing sensitive information
 - **Encrypted types**: We mastered the use of `euint64`, `ebool`, `externalEuint64` and their operations (FHE.add, FHE.mul, FHE.select)
-- **Encryption/decryption flow**: We understood the complete cycle from frontend (fhevmjs) to on-chain operations
+- **Encryption/decryption flow**: We understood the complete cycle from frontend to on-chain operations
 - **Limitations and workarounds**: We learned about current limitations (FHE.div not available) and how to design alternative solutions
 
 ### Hybrid Architecture
@@ -255,22 +253,22 @@ _If you plan to continue development beyond ARG25, what's next?_
 
 ## Technical Documentation
 
-For more technical details about the project, see the documentation in the `docs/` folder:
+For more technical details about the project, see the documentation in the [docs/](https://github.com/sebastianlujan/arg25-Projects/tree/EVVM-zkEVVM/invisible-zkevvm/docs) folder:
 
-- **[FHE_SETUP.md](docs/FHE_SETUP.md)** - Complete Zama FHE setup guide
-- **[TREASURY_GUIDE.md](docs/TREASURY_GUIDE.md)** - TreasuryVault usage guide with FHE
-- **[STAKING_ENCRYPTED_INPUTS.md](docs/STAKING_ENCRYPTED_INPUTS.md)** - Encrypted inputs guide for Staking
-- **[IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md)** - Detailed implementation plan
-- **[PROGRESS.md](docs/PROGRESS.md)** - Detailed progress report
-- **[SPEC.md](docs/SPEC.md)** - Technical specifications of the project
-- **[DEPLOYMENT_SUMMARY.md](DEPLOYMENT_SUMMARY.md)** - Deployment summary
-- **[QUICK_DEPLOY.md](QUICK_DEPLOY.md)** - Quick deployment guide
+- **[FHE_SETUP.md](https://github.com/sebastianlujan/arg25-Projects/tree/EVVM-zkEVVM/invisible-zkevvm/docs/FHE_SETUP.md)** - Complete Zama FHE setup guide
+- **[TREASURY_GUIDE.md](https://github.com/sebastianlujan/arg25-Projects/tree/EVVM-zkEVVM/invisible-zkevvm/docs/TREASURY_GUIDE.md)** - TreasuryVault usage guide with FHE
+- **[STAKING_ENCRYPTED_INPUTS.md](https://github.com/sebastianlujan/arg25-Projects/tree/EVVM-zkEVVM/invisible-zkevvm/docs/STAKING_ENCRYPTED_INPUTS.md)** - Encrypted inputs guide for Staking
+- **[IMPLEMENTATION_PLAN.md](https://github.com/sebastianlujan/arg25-Projects/tree/EVVM-zkEVVM/invisible-zkevvm/docs/IMPLEMENTATION_PLAN.md)** - Detailed implementation plan
+- **[PROGRESS.md](https://github.com/sebastianlujan/arg25-Projects/tree/EVVM-zkEVVM/invisible-zkevvm/docs/PROGRESS.md)** - Detailed progress report
+- **[SPEC.md](https://github.com/sebastianlujan/arg25-Projects/tree/EVVM-zkEVVM/invisible-zkevvm/docs/SPEC.md)** - Technical specifications of the project
+- **[DEPLOYMENT_SUMMARY.md](https://github.com/sebastianlujan/arg25-Projects/tree/EVVM-zkEVVM/invisible-zkevvm/DEPLOYMENT_SUMMARY.md)** - Deployment summary
+- **[QUICK_DEPLOY.md](https://github.com/sebastianlujan/arg25-Projects/tree/EVVM-zkEVVM/invisible-zkevvm/QUICK_DEPLOY.md)** - Quick deployment guide
 
 ## References
 
 - **EVVM Documentation:** [evvm.org](https://www.evvm.org/)
 - **Arbitrum Stylus Resources:** [awesome-stylus](https://github.com/OffchainLabs/awesome-stylus)
-- **Zama FHEVM Documentation:** [docs.zama.ai](https://docs.zama.ai/fhevm)
+- **CoFHE Documentation:** [docs.zama.ai](https://docs.zama.ai/fhevm)
 - **Arbitrum Documentation:** [docs.arbitrum.io](https://docs.arbitrum.io/)
 
 ---
